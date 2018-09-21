@@ -78,9 +78,6 @@ class MyApp(App):
         self.ax.imshow(self.img)
         
         #--: Widgets
-#        btn_cam = IconButton(source='./icons/cam.png', size_hint_x = None, width = 50)
-#        btn_cam.bind(on_release=self.show_popup_cam)
-
         btn_user = IconButton(source='./icons/user.png', text='', size_hint_x=None, width=50)
         btn_user.bind(on_release=self.show_popup_user)
         
@@ -96,15 +93,9 @@ class MyApp(App):
         
         fichoo = FileChooserIconView(size_hint_y = 0.8)
         
-#        btn_sim_start = IconButton(source='./icons/play.png', text='', size_hint_x=None, width=50)
-#        btn_sim_start.bind(on_release=self.start)
-
-        label_name = Label(text='Name')
-        input_name = TextInput(text='Name', multiline=False)
-        
-        pb = ProgressBar(max=1000)
-        # this will update the graphics automatically (75% done)
-        pb.value = 750
+#        pb = ProgressBar(max=1000)
+#        # this will update the graphics automatically (75% done)
+#        pb.value = 750
 
         #--:Page Layout
         #--- Page 1
