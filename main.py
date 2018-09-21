@@ -87,15 +87,18 @@ class MyApp(App):
         btn_sim = IconButton(source='./icons/sim.png', size_hint_x = None, width = 50)
         btn_sim.bind(on_release=self.show_popup_sim)
         
-        btn_lens = IconButton(source='./icons/lens.jpg', size_hint_x = None, width = 50)
-        btn_home = IconButton(source='./icons/simcode.png', size_hint_x = None, width = 50)
+        btn_lens = IconButton(source='./icons/lens.png', size_hint_x = None, width = 50)
+        
+        btn_settings = IconButton(source='./icons/settings.png', size_hint_x = None, width = 50)
+        
+        btn_home = IconButton(source='./icons/home.png', size_hint_x = None, width = 50)
         btn_home.bind(on_release=self.clean)
         
         fichoo = FileChooserIconView(size_hint_y = 0.8)
         
-        btn_sim_start = IconButton(source='./icons/play.png', text='', size_hint_x=None, width=50)
-        btn_sim_start.bind(on_release=self.start)
-        
+#        btn_sim_start = IconButton(source='./icons/play.png', text='', size_hint_x=None, width=50)
+#        btn_sim_start.bind(on_release=self.start)
+
         label_name = Label(text='Name')
         input_name = TextInput(text='Name', multiline=False)
         
@@ -113,7 +116,7 @@ class MyApp(App):
         Settings_Page.add_widget(btn_user)
         Settings_Page.add_widget(btn_sim)
         Settings_Page.add_widget(btn_lens)
-        Settings_Page.add_widget(btn_sim_start)
+        Settings_Page.add_widget(btn_settings)
         Settings_Page.add_widget(btn_home)
         
         #Settings_Page.add_widget(fichoo)
@@ -149,14 +152,16 @@ class MyApp(App):
         self.popup.open()
     
     def show_popup_sim(self,*args):
-        label_name = Label(text='Name')
-        input_name = TextInput(text='Name', multiline=False)
-        Settings_content = GridLayout(cols=2, row_force_default=True, row_default_height=40)
-        Settings_content.add_widget(label_name)
-        Settings_content.add_widget(input_name)
+#        label_name = Label(text='Name')
+#        input_name = TextInput(text='Name', multiline=False)
+        btn_sim_start = IconButton(source='./icons/play.png', text='', size_hint_x=None, width=50)
+        btn_sim_start.bind(on_release=self.start)
+
+        Settings_content = GridLayout(cols=1, row_force_default=True, row_default_height=40)
+        Settings_content.add_widget(btn_sim_start)
     
-        self.popup = Popup(title='', size_hint=(.600, .785), content=Settings_content, auto_dismiss=True)
-        self.popup.open()
+        self.popup_sim = Popup(title='', size_hint=(.450, .250), content=Settings_content, auto_dismiss=True)
+        self.popup_sim.open()
     
     def show_popup_cam(self, *args):
         self.cam = Camera(resolution=(640, 480))
@@ -228,7 +233,7 @@ class MyApp(App):
         
 #        self.progress["value"] = 0; self.maxframes = 300; self.progress["maximum"] = 300
 #        self.read_frames()
-
+        self.popup_sim.dismiss()
 
 #--------- RUN ----------------------------
 if __name__ == "__main__":
