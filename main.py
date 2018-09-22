@@ -38,13 +38,13 @@ from matplotlib import cm, colors
 from matplotlib.lines import Line2D
 
 import glob
-
+import subprocess, shlex
 
 #from kivy.core.window import Window
 #Window.clearcolor = (1, 1, 1, 1)
 
 #--- CWD -----
-CWD = os.getcwd()
+CWD = os.getcwd(); dpi = 100
 
 class AnchoredHScaleBar(matplotlib.offsetbox.AnchoredOffsetbox):
     """ size: length of bar in data units
@@ -90,12 +90,7 @@ class MyApp(App):
         
         btn_home = IconButton(source='./icons/home.png', size_hint_x = None, width = 50)
         btn_home.bind(on_release=self.clean)
-        
-        fichoo = FileChooserIconView(size_hint_y = 0.8)
-        
-#        pb = ProgressBar(max=1000)
-#        # this will update the graphics automatically (75% done)
-#        pb.value = 750
+
 
         #--:Page Layout
         #--- Page 1
@@ -110,11 +105,6 @@ class MyApp(App):
         Settings_Page.add_widget(btn_settings)
         Settings_Page.add_widget(btn_home)
         
-        #Settings_Page.add_widget(fichoo)
-
-        
-        #Settings_Page.add_widget(textinput)
-        #Settings_Page.add_widget(pb)
         Pages.add_widget(Settings_Page)
         return Pages
     
@@ -125,31 +115,33 @@ class MyApp(App):
         label_email = Image(source='./icons/email.png')
         input_email = TextInput(text='', multiline=False, size_hint_x = None, width = 350)
         
+
+        self.btn_cam = IconButton(source='./icons/photo.png')
+        self.btn_cam.bind(on_release=self.show_popup_cam)
         
-        btn_cam = IconButton(source='./icons/cam.png')
-        btn_cam.bind(on_release=self.show_popup_cam)
-        
-        self.label_photo = Image(source='./icons/photo.png', size_hint_y = None,  width = 350)
-        
-        Settings_content = GridLayout(cols=2, spacing = [20,0])
-        Settings_content.add_widget(label_name)
-        Settings_content.add_widget(self.input_name)
-        Settings_content.add_widget(label_email)
-        Settings_content.add_widget(input_email)
-        Settings_content.add_widget(btn_cam)
-        Settings_content.add_widget(self.label_photo)
-        
-        self.popup = Popup(title='', size_hint=(.550, .400), content=Settings_content, auto_dismiss=True)
+        Settings_content = BoxLayout(orientation='vertical')
+        Settings_content.add_widget(self.btn_cam)
+        user_content = GridLayout(cols = 2, size_hint_y = None, height = '68dp')
+        user_content.add_widget(label_name)
+        user_content.add_widget(self.input_name)
+        user_content.add_widget(label_email)
+        user_content.add_widget(input_email)
+        Settings_content.add_widget(user_content)
+
+        self.popup = Popup(title='', size_hint=(.520, .480), content=Settings_content, auto_dismiss=True)
         self.popup.open()
     
     def show_popup_sim(self,*args):
-#        label_name = Label(text='Name')
-#        input_name = TextInput(text='Name', multiline=False)
+        
         btn_sim_start = IconButton(source='./icons/play.png', text='', size_hint_x=None, width=50)
         btn_sim_start.bind(on_release=self.start)
+        
+        btn_sim_save = IconButton(source='./icons/save.png', text='', size_hint_x=None, width=50)
+        btn_sim_save.bind(on_release=self.save_movie)
 
         Settings_content = GridLayout(cols=1, row_force_default=True, row_default_height=40)
         Settings_content.add_widget(btn_sim_start)
+        Settings_content.add_widget(btn_sim_save)
     
         self.popup_sim = Popup(title='', size_hint=(.450, .250), content=Settings_content, auto_dismiss=True)
         self.popup_sim.open()
@@ -173,7 +165,7 @@ class MyApp(App):
         self.cam.play = not self.cam.play
         #timestr = time.strftime("%Y%m%d_%H%M%S")
         self.cam.export_to_png("./tmp/image.png")
-        self.label_photo.source = "./tmp/image.png"
+        self.btn_cam.source = "./tmp/image.png"
     
     def start(self, *args):
         #self.progress_var.set(0); self.frames = 0; self.maxframes = 0
@@ -225,6 +217,22 @@ class MyApp(App):
 #        self.progress["value"] = 0; self.maxframes = 300; self.progress["maximum"] = 300
 #        self.read_frames()
         self.popup_sim.dismiss()
+
+    def save_movie(self, *args):
+        writer = animation.writers['ffmpeg'](fps=15)#, bitrate=16000, codec='libx264')
+        
+#        self.ani.save(self.savedir + "/" + self.img_filename + "_movie.mp4", writer=writer, dpi=dpi) #, savefig_kwargs={'dpi' : 200}
+#        video_file = self.savedir + "/" + self.img_filename + "_movie.mp4"
+#        muxvideo_file = self.savedir + "/" + self.img_filename + "_mux_movie.mp4"
+#
+        self.ani.save(self.input_name.text + "_movie.mp4", writer=writer, dpi=dpi) #, savefig_kwargs={'dpi' : 200}
+        video_file = self.input_name.text + "_movie.mp4"
+        muxvideo_file = self.input_name.text + "_mux_movie.mp4"
+        
+        audio_file = "ChillingMusic.wav"
+        cmd = 'ffmpeg -i '+ video_file + ' -i ' + audio_file + ' -shortest ' + muxvideo_file
+        subprocess.call(cmd, shell=True); print('Saving and Muxing Done')
+        self.muxvideo = self.input_name.text + "_mux_movie.mp4"
 
 #--------- RUN ----------------------------
 if __name__ == "__main__":
