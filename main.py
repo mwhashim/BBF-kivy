@@ -1,6 +1,9 @@
 from __future__ import division
 import os, sys
 
+from astropy.cosmology import wCDM
+from astropy.io import fits
+
 from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
@@ -33,9 +36,6 @@ import matplotlib.animation as animation
 import matplotlib.image as mpimg
 from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 import matplotlib
-
-#from astropy.cosmology import wCDM
-#from astropy.io import fits
 
 import numpy as np
 from matplotlib import cm, colors
@@ -77,12 +77,14 @@ class IconButton(ButtonBehavior, Image):
 class MyApp(App):
 
     def build(self):
-        #--:PLot Pan
-        self.fig = plt.Figure(facecolor='0.7', frameon=False)
-        self.ax = plt.Axes(self.fig, [0., 0., 1., 1.]); self.ax.set_axis_off(); self.fig.add_axes(self.ax)
-        self.canvas = FigureCanvasKivyAgg(self.fig)
+        
+        #--:Initiating plot pan
+        self.fig, self.ax, self.canvas = self.PlotPan()
+        self.fig0, self.ax0, self.canvas0 = self.PlotPan()
+
+        #--: Home Page
         self.img=mpimg.imread('BBF_frontpage.png')
-        self.ax.imshow(self.img); self.anim_running = True
+        self.ax.imshow(self.img); self.anim_running = True; self.anim_compare = True
         
         #--: Widgets
         btn_user = IconButton(source='./icons/user.png', text='', size_hint_x=None, width=50)
@@ -100,11 +102,19 @@ class MyApp(App):
         
         self.btn_pause = IconButton(source='./icons/pause.png', size_hint_x = None, width = 50)
         self.btn_pause.bind(on_press=self.pause)
+        
+        self.btn_compare = IconButton(source='./icons/compare.ico', size_hint_x = None, width = 50)
+        self.btn_compare.bind(on_press=self.compare)
+        
+        self.btn_sim_save = IconButton(source='./icons/save.png', size_hint_x = None, width = 50)
+        self.btn_sim_save.bind(on_release=self.save_movie)
 
         #--:Page Layout
         #--- Page 1
         Pages = PageLayout(orientation= "vertical")
-        Pages.add_widget(self.canvas)
+        self.Box_sim = BoxLayout(orientation= "horizontal")
+        self.Box_sim.add_widget(self.canvas)
+        Pages.add_widget(self.Box_sim)
         #--- Page 2
         self.Settings_Page = GridLayout(cols=1, row_force_default=True, row_default_height=40)
         
@@ -117,6 +127,21 @@ class MyApp(App):
         Pages.add_widget(self.Settings_Page)
         return Pages
     
+    def PlotPan(self):
+        #--:PLot Pan
+        fig = plt.Figure(facecolor='0.7', frameon=False)
+        ax = plt.Axes(fig, [0., 0., 1., 1.]); ax.set_axis_off(); fig.add_axes(ax)
+        canvas = FigureCanvasKivyAgg(fig)
+        return fig, ax, canvas
+    
+    def compare(self, *args):
+        if self.anim_compare:
+            self.Box_sim.add_widget(self.canvas0)
+            self.anim_compare = False
+        else:
+            self.Box_sim.remove_widget(self.canvas0)
+            self.anim_compare = True
+
     def show_popup_user(self,*args):
         label_name = Image(source='./icons/name.png')
         self.input_name = TextInput(text='', multiline=False, size_hint_x = None, width = 200)
@@ -145,21 +170,18 @@ class MyApp(App):
         self.btn_sim_start = IconButton(source='./icons/play.png', text='', size_hint_y = None, height = '48dp')
         self.btn_sim_start.bind(on_release=self.sim_start)
         
-        btn_sim_save = IconButton(source='./icons/save.png', text='', size_hint_y = None, height = '48dp')
-        btn_sim_save.bind(on_release=self.save_movie)
-        
         image_dm = Image(source='./icons/dm.gif')
         image_de = Image(source='./icons/de.gif')
         
-        slider_dm = Slider(min= 0.0, max= 1.0, value = 0.25, step = 0.25, orientation='vertical', value_track=True, value_track_color=[1, 0, 0, 1], size_hint_y = None, height = '160dp')
-        slider_de = Slider(min= 0.0, max= 1.0, value = 0.75, step = 0.25, orientation='vertical', value_track=True, value_track_color=[1, 0, 0, 1], size_hint_y = None, height = '160dp')
+        self.slider_dm = Slider(min= 0.0, max= 1.0, value = 0.25, step = 0.25, orientation='vertical', value_track=True, value_track_color=[1, 0, 0, 1], size_hint_y = None, height = '160dp')
+        self.slider_de = Slider(min= 0.0, max= 1.0, value = 0.75, step = 0.25, orientation='vertical', value_track=True, value_track_color=[1, 0, 0, 1], size_hint_y = None, height = '160dp')
         
         label_dm = Label(text = 'Dark Matter')
         label_de = Label(text = 'Dark Energy')
         label_png = Label(text = 'Early Universe')
         label_gvr = Label(text = 'Gravity Type')
         
-        self.spinner_dm = Spinner(text='Select', values=('Cold', 'Hot'))
+        self.spinner_dm = Spinner(text='Select', values=('Cold', 'Warm'))
         self.spinner_de = Spinner(text='Select', values=('Constant', 'Quintessence', 'Phantom'))
         self.spinner_png = Spinner(text='Select', values=('Gaussian', 'Negative Non-Gaussain', 'Positive Non-Gaussian'))
         self.spinner_gvr = Spinner(text='Select', values=('Enistein', 'Modified Gravity'))
@@ -168,13 +190,13 @@ class MyApp(App):
         
         slider_dm_content = GridLayout(cols=1)
         slider_dm_content.add_widget(image_dm)
-        slider_dm_content.add_widget(slider_dm)
-        slider_dm_content.add_widget(self.btn_sim_start)
+        slider_dm_content.add_widget(self.slider_dm)
+        
         
         slider_de_content = GridLayout(cols=1)
         slider_de_content.add_widget(image_de)
-        slider_de_content.add_widget(slider_de)
-        slider_de_content.add_widget(btn_sim_save)
+        slider_de_content.add_widget(self.slider_de)
+        
         
         subSettings_content = GridLayout(cols=2, size_hint_x = None, width=350)
         subSettings_content.add_widget(label_dm)
@@ -189,6 +211,8 @@ class MyApp(App):
         Settings_content.add_widget(subSettings_content)
         Settings_content.add_widget(slider_dm_content)
         Settings_content.add_widget(slider_de_content)
+        Settings_content.add_widget(self.btn_sim_start)
+
         
     
         self.popup_sim = Popup(title='', size_hint=(.680, .460), content=Settings_content, auto_dismiss=True)
@@ -207,24 +231,24 @@ class MyApp(App):
         self.popup.open()
     
     def clean(self, *args):
-        self.ax.clear(); self.ax.axis('off'); self.ax.imshow(self.img); self.canvas.draw(); self.Settings_Page.remove_widget(self.btn_pause)
+        self.ax.clear(); self.ax.axis('off'); self.ax.imshow(self.img); self.canvas.draw();
+        self.Settings_Page.remove_widget(self.btn_pause); self.Settings_Page.remove_widget(self.btn_compare)
+        self.Settings_Page.remove_widget(self.btn_sim_save)
     
     def camera(self, *args):
         self.cam.play = not self.cam.play
-        #timestr = time.strftime("%Y%m%d_%H%M%S")
-        self.cam.export_to_png("./tmp/image.png")
-        self.btn_cam.source = "./tmp/image.png"
+        self.cam.export_to_png("./tmp/" + self.input_name.text + "_image.png")
+        self.btn_cam.source = "./tmp/" + self.input_name.text + "_image.png"
     
     def sim_start(self, *args):
         #self.progress_var.set(0); self.frames = 0; self.maxframes = 0
         
         Simu_Dir = "./../Dens-Maps/"
         
-        #cosmo = wCDM(70.3, self.Omega_m_Var.get(), self.Omega_l_Var.get(), w0=self.wx)
+        cosmo = wCDM(70.3, self.slider_dm.value, self.slider_de.value, w0 = -1.0)
         #filenames=sorted(glob.glob(self.simdir + "/" + Simu_Dir +'*.npy')); lga = linspace(log(0.05), log(1.0), 300); a = exp(lga); z = 1./a - 1.0;
         #lktime = z #cosmo.lookback_time(z).value
-        filenames=sorted(glob.glob(Simu_Dir + '*.npy')); lga = np.linspace(np.log(0.05), np.log(1.0), 300); a = np.exp(lga); z = 1./a - 1.0;
-        lktime = z #cosmo.lookback_time(z).value
+        filenames=sorted(glob.glob(Simu_Dir + '*.npy')); lga = np.linspace(np.log(0.05), np.log(1.0), 300); a = np.exp(lga); z = 1./a - 1.0; lktime = cosmo.lookback_time(z).value
         def animate(filename):
             image = np.load(filename); indx = filenames.index(filename)#; image=ndimage.gaussian_filter(image, sigma= sigmaval, truncate=truncateval, mode='wrap')
             im.set_data(image + 1)#; im.set_clim(image.min()+1.,image.max()+1.)
@@ -238,7 +262,7 @@ class MyApp(App):
         self.time = self.ax.text(0.1, 0.05 , text_dict['t43'] + ' %s Gyr' %round(lktime[0], 4), horizontalalignment='left', verticalalignment='top',color='white', transform = self.ax.transAxes, fontsize=10)
 
 
-        arr_hand = mpimg.imread(CWD + "/tmp/" + "image.png")
+        arr_hand = mpimg.imread(CWD + "/tmp/" + self.input_name.text +  "_image.png")
         imagebox = OffsetImage(arr_hand, zoom=.1); xy = (0.1, 0.15) # coordinates to position this image
 
         ab = AnnotationBbox(imagebox, xy, xybox=(0.1, 0.15), xycoords='axes fraction', boxcoords='axes fraction', pad=0.1)
@@ -266,6 +290,8 @@ class MyApp(App):
 #        self.progress["value"] = 0; self.maxframes = 300; self.progress["maximum"] = 300
 #        self.read_frames()
         self.Settings_Page.add_widget(self.btn_pause)
+        self.Settings_Page.add_widget(self.btn_compare)
+        self.Settings_Page.add_widget(self.btn_sim_save)
         self.popup_sim.dismiss()
         
     def pause(self, *args):
