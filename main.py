@@ -50,7 +50,7 @@ from matplotlib.lines import Line2D
 import glob
 import subprocess, shlex
 
-from textdictITA import text_dict
+from textdictENG import text_dict
 from emailling import *
 
 
@@ -248,7 +248,7 @@ class MyApp(App):
         self.input_name = TextInput(text='', multiline=False, size_hint_x = None, width = 200)
         
         label_email = Image(source='./icons/email.png')
-        input_email = TextInput(text='', multiline=False, size_hint_x = None, width = 200)
+        self.input_email = TextInput(text='', multiline=False, size_hint_x = None, width = 200)
         
         self.btn_cam = IconButton(source='./icons/photo.png')
         self.btn_cam.bind(on_release=self.show_popup_cam)
@@ -259,7 +259,7 @@ class MyApp(App):
         user_content.add_widget(label_name)
         user_content.add_widget(self.input_name)
         user_content.add_widget(label_email)
-        user_content.add_widget(input_email)
+        user_content.add_widget(self.input_email)
         Settings_content.add_widget(user_content)
         Settings_content.add_widget(self.btn_cam)
 
@@ -621,7 +621,8 @@ class MyApp(App):
     def send_movie(self, *args):
         #files=sorted(glob.glob(self.img_filename + '/*'))
         files = os.listdir(self.savedir + "/" +  self.img_filenamedir)
-        emailling(self.input_name.text, self.From, self.input_email.text, self.PWD, self.savedir + "/" +  self.img_filenamedir, files)
+        From = 'researchernight2018@gmail.com'; PWD = 'unibo2018'
+        emailling(self.input_name.text, From, self.input_email.text, PWD, self.savedir + "/" +  self.img_filenamedir, files)
 
 
 #--------- RUN ----------------------------
