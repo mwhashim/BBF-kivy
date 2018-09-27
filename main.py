@@ -182,6 +182,9 @@ class MyApp(App):
         self.btn_compare = IconButton(source='./icons/compare.ico', size_hint_x = None, width = 50)
         self.btn_compare.bind(on_press=self.compare)
         
+#        self.btn_preview = IconButton(source='./icons/video.png', size_hint_x = None, width = 50)
+#        self.btn_preview.bind(on_press=self.show_popup_preview)
+
         self.btn_sim_save = IconButton(source='./icons/save.png', size_hint_x = None, width = 50)
         self.btn_sim_save.bind(on_release=self.save_movie)
         
@@ -277,6 +280,7 @@ class MyApp(App):
     def lensing_icons(self, *args):
         self.subSettings_Page.remove_widget(self.btn_pause)
         self.subSettings_Page.remove_widget(self.btn_compare)
+        #self.subSettings_Page.remove_widget(self.btn_preview)
         self.subSettings_Page.remove_widget(self.btn_sim_save)
         if self.lensing_running:
             self.subSettings_Page.add_widget(self.btn_halo)
@@ -336,7 +340,7 @@ class MyApp(App):
         self.popup_dirselect.dismiss()
     
     def show_popup_preview(self, *args):
-        player = Video(source = self.input_name.text + "_movie.mp4", state='play', options={'allow_stretch': True})
+        player = Video(source = self.savedir + "/" + self.img_filenamedir + "/" + self.img_filenamedir  + "_mux_movie.mp4", state='play', options={'allow_stretch': True})
         videobox = BoxLayout()
         videobox.add_widget(player)
         self.popup_player = Popup(title='', size_hint=(.680, .460), content=videobox, auto_dismiss=True, separator_height=0)
@@ -422,7 +426,7 @@ class MyApp(App):
     def clean(self, *args):
         self.ax.clear(); self.ax.axis('off'); self.ax.imshow(self.img); self.canvas.draw();
         self.subSettings_Page.remove_widget(self.btn_pause); self.subSettings_Page.remove_widget(self.btn_compare)
-        self.subSettings_Page.remove_widget(self.btn_sim_save)
+        self.subSettings_Page.remove_widget(self.btn_sim_save)#; self.subSettings_Page.remove_widget(self.btn_preview)
     
     def camera(self, *args):
         self.cam.play = not self.cam.play
@@ -439,6 +443,7 @@ class MyApp(App):
         
         self.cam.export_to_png(CWD + "/tmp/" + self.img_filenamedir + "_image.png")
         self.btn_cam.source = CWD + "/tmp/" + self.img_filenamedir + "_image.png"
+        self.popup.dismiss()
     
     def sim_start(self, *args):
         self.ax.clear(); self.ax.axis('off'); self.ax.imshow(self.img); self.canvas.draw();
@@ -447,6 +452,7 @@ class MyApp(App):
         self.sim_nonStand(); self.sim_stand()
         self.subSettings_Page.add_widget(self.btn_pause)
         self.subSettings_Page.add_widget(self.btn_compare)
+        #self.subSettings_Page.add_widget(self.btn_preview)
         self.subSettings_Page.add_widget(self.btn_sim_save)
         self.popup_sim.dismiss()
     
@@ -555,6 +561,7 @@ class MyApp(App):
         cmd = 'ffmpeg -i '+ video_file + ' -i ' + audio_file + ' -shortest ' + muxvideo_file
         subprocess.call(cmd, shell=True); print('Saving and Muxing Done')
         self.muxvideo = self.savedir + "/" + self.img_filenamedir + "/" + self.img_filenamedir + "_mux_movie.mp4"
+        os.remove(video_file)
     
 
     def MapLensedImage(self, *args):
