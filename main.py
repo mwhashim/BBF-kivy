@@ -263,7 +263,7 @@ class MyApp(App):
         Settings_content.add_widget(user_content)
         Settings_content.add_widget(self.btn_cam)
 
-        self.popup = Popup(title='', size_hint=(.640, .480), content=Settings_content, auto_dismiss=True, separator_height=0)
+        self.popup = Popup(title='', size_hint=(None, None) , size=(500, 250), content=Settings_content, auto_dismiss=True, separator_height=0)
         self.popup.open()
     
     def lensing_icons(self, *args):
@@ -337,10 +337,14 @@ class MyApp(App):
         self.btn_sim_start.bind(on_release=self.sim_start)
         
         image_dm = Image(source='./icons/dm.png')
+        self.value_dm = Label(text = '0.25')
         image_de = Image(source='./icons/de.png')
+        self.value_de = Label(text = '0.75')
         
         self.slider_dm = Slider(min= 0.0, max= 1.0, value = 0.25, step = 0.25, orientation='vertical', value_track=True, value_track_color=[1, 0, 0, 1], size_hint_y = None, height = '160dp')
+        self.slider_dm.bind(value=self.update_dm)
         self.slider_de = Slider(min= 0.0, max= 1.0, value = 0.75, step = 0.25, orientation='vertical', value_track=True, value_track_color=[1, 0, 0, 1], size_hint_y = None, height = '160dp')
+        self.slider_de.bind(value=self.update_de)
         
         label_dm = Label(text = text_dict['t24'])
         label_de = Label(text = text_dict['t20'])
@@ -356,11 +360,13 @@ class MyApp(App):
         
         slider_dm_content = GridLayout(cols=1)
         slider_dm_content.add_widget(image_dm)
+        slider_dm_content.add_widget(self.value_dm)
         slider_dm_content.add_widget(self.slider_dm)
         
         
         slider_de_content = GridLayout(cols=1)
         slider_de_content.add_widget(image_de)
+        slider_de_content.add_widget(self.value_de)
         slider_de_content.add_widget(self.slider_de)
         
         
@@ -381,8 +387,14 @@ class MyApp(App):
 
         
     
-        self.popup_sim = Popup(title='', size_hint=(.680, .460), content=Settings_content, auto_dismiss=True, separator_height=0)
+        self.popup_sim = Popup(title='', size_hint=(None, None) , size=(600, 280), content=Settings_content, auto_dismiss=True, separator_height=0)
         self.popup_sim.open()
+    
+    def update_dm(self, instance,value):
+        self.value_dm.text = str(value)
+    
+    def update_de(self, instance,value):
+        self.value_de.text = str(value)
     
     def show_popup_cam(self, *args):
         self.cam = Camera(resolution=(640, 480))
@@ -393,7 +405,7 @@ class MyApp(App):
         content.add_widget(self.cam)
         content.add_widget(btn_capture)
         
-        self.popup = Popup(title='', size_hint=(.600, .785), content=content, auto_dismiss=True, separator_height=0)
+        self.popup = Popup(title='', size_hint=(None, None) , size=(600, 480), content=content, auto_dismiss=True, separator_height=0)
         self.popup.open()
     
     def clean(self, *args):
