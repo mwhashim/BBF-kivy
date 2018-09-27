@@ -418,6 +418,54 @@ class MyApp(App):
         self.btn_cam.source = CWD + "/tmp/" + self.img_filenamedir + "_image.png"
     
     def sim_start(self, *args):
+        self.sim_nonStand(); self.sim_stand()
+        self.subSettings_Page.add_widget(self.btn_pause)
+        self.subSettings_Page.add_widget(self.btn_compare)
+        self.subSettings_Page.add_widget(self.btn_sim_save)
+        self.popup_sim.dismiss()
+    
+    def sim_stand(self):
+        Simu_Dir = "BBF_Lambda_0.25-0.75" + "/Dens-Maps/"
+    
+        cosmo = wCDM(70.3, 0.25, 0.75, w0 = -1.0)
+        filenames=sorted(glob.glob(self.simdir + "/" + Simu_Dir +'*.npy')); lga = np.linspace(np.log(0.05), np.log(1.0), 300); a = np.exp(lga); z = 1./a - 1.0; lktime = cosmo.lookback_time(z).value
+        def animate(filename):
+            image = np.load(filename); indx = filenames.index(filename)#; image=ndimage.gaussian_filter(image, sigma= sigmaval, truncate=truncateval, mode='wrap')
+            im.set_data(image + 1)#; im.set_clim(image.min()+1.,image.max()+1.)
+            self.time0.set_text('%s %s' %(round(lktime[indx], 4), text_dict['t49']))
+            return im
+        
+        dens_map = np.load(filenames[0])#;  dens_map=ndimage.gaussian_filter(dens_map, sigma= sigmaval, truncate=truncateval, mode='wrap') #; dens_map0 = load(filenames[-1]); #print dens_map0.min()+1, dens_map0.max()+1.
+        im = self.ax0.imshow(dens_map + 1, cmap=cm.magma, norm=colors.LogNorm(vmin=1., vmax=1800., clip = True), interpolation="bicubic")#, clim = (1, 1800.+1.))
+        
+        
+        self.time0 = self.ax0.text(0.1, 0.05 , text_dict['t43'] + ' %s Gyr' %round(lktime[0], 4), horizontalalignment='left', verticalalignment='top',color='white', transform = self.ax0.transAxes, fontsize=10)
+        
+        
+        arr_hand = mpimg.imread(CWD + "/tmp/" + self.img_filenamedir +  "_image.png")
+        imagebox = OffsetImage(arr_hand, zoom=.1); xy = (0.1, 0.15) # coordinates to position this image
+        
+        ab = AnnotationBbox(imagebox, xy, xybox=(0.1, 0.15), xycoords='axes fraction', boxcoords='axes fraction', pad=0.1)
+        self.ax0.add_artist(ab)
+        
+        
+        arr_hand1 = mpimg.imread("./icons/simcode.png")
+        imagebox1 = OffsetImage(arr_hand1, zoom=.1); xy = (0.9, 0.9) # coordinates to position this image
+        ab1 = AnnotationBbox(imagebox1, xy, xybox=(0.9, 0.9), xycoords='axes fraction', boxcoords='axes fraction', pad=0.1)
+        self.ax0.add_artist(ab1)
+        
+        #iMpc = lambda x: x*1024/125  #x in Mpc, return in Pixel *3.085e19
+        ob = AnchoredHScaleBar(size=0.1, label="10Mpc", loc=4, frameon=False, pad=0.6, sep=2, color="white", linewidth=0.8)
+        self.ax0.add_artist(ob)
+        
+        sim_details_text = '%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s' %(text_dict['t42'], self.input_name.text, text_dict['t53'], text_dict['t50'], text_dict['t20'], text_dict['t21'], text_dict['t24'], text_dict['t25'], text_dict['t27'],  text_dict['t28'], text_dict['t31'] , text_dict['t32'])
+        print sim_details_text
+        self.ax0.text(0.1, 0.83, sim_details_text, color='white', bbox=dict(facecolor='none', edgecolor='white', boxstyle='round,pad=1', alpha=0.5), transform = self.ax0.transAxes, alpha = 0.5)
+        
+        self.ani0 = animation.FuncAnimation(self.fig0, animate, filenames, repeat=False, interval=25, blit=False)
+        self.ax0.axis('off'); self.ax0.get_xaxis().set_visible(False); self.ax0.get_yaxis().set_visible(False); self.canvas0.draw()
+    
+    def sim_nonStand(self):
         Simu_Dir = self.model_select() + "/Dens-Maps/"
         
         cosmo = wCDM(70.3, self.slider_dm.value, self.slider_de.value, w0 = -1.0)
@@ -457,20 +505,17 @@ class MyApp(App):
 
         self.ani = animation.FuncAnimation(self.fig, animate, filenames, repeat=False, interval=25, blit=False)
         self.ax.axis('off'); self.ax.get_xaxis().set_visible(False); self.ax.get_yaxis().set_visible(False); self.canvas.draw()
-        
-        self.subSettings_Page.add_widget(self.btn_pause)
-        self.subSettings_Page.add_widget(self.btn_compare)
-        self.subSettings_Page.add_widget(self.btn_sim_save)
-        self.popup_sim.dismiss()
-        
+    
     def pause(self, *args):
         if self.anim_running:
             self.btn_pause.source = './icons/play.png'
             self.ani.event_source.stop()
+            self.ani0.event_source.stop()
             self.anim_running = False
         else:
             self.btn_pause.source = './icons/pause.png'
             self.ani.event_source.start()
+            self.ani0.event_source.start()
             self.anim_running = True
 
     def save_movie(self, *args):
