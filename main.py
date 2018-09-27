@@ -244,10 +244,11 @@ class MyApp(App):
             self.anim_compare = True
 
     def show_popup_user(self,*args):
-        label_name = Image(source='./icons/name.png')
+        
+        self.label_name = Image(source='./icons/name.png')
         self.input_name = TextInput(text='', multiline=False, size_hint_x = None, width = 200)
         
-        label_email = Image(source='./icons/email.png')
+        self.label_email = Image(source='./icons/email.png')
         self.input_email = TextInput(text='', multiline=False, size_hint_x = None, width = 200)
         
         self.btn_cam = IconButton(source='./icons/photo.png')
@@ -256,9 +257,9 @@ class MyApp(App):
         Settings_content = BoxLayout(orientation='horizontal')
         user_content = GridLayout(cols = 2, size_hint_y = None, height = '58dp')
         
-        user_content.add_widget(label_name)
+        user_content.add_widget(self.label_name)
         user_content.add_widget(self.input_name)
-        user_content.add_widget(label_email)
+        user_content.add_widget(self.label_email)
         user_content.add_widget(self.input_email)
         Settings_content.add_widget(user_content)
         Settings_content.add_widget(self.btn_cam)
@@ -267,6 +268,9 @@ class MyApp(App):
         self.popup.open()
     
     def lensing_icons(self, *args):
+        self.subSettings_Page.remove_widget(self.btn_pause)
+        self.subSettings_Page.remove_widget(self.btn_compare)
+        self.subSettings_Page.remove_widget(self.btn_sim_save)
         if self.lensing_running:
             self.subSettings_Page.add_widget(self.btn_halo)
             self.subSettings_Page.add_widget(self.btn_cluster)
@@ -336,9 +340,9 @@ class MyApp(App):
         self.btn_sim_start = IconButton(source='./icons/play.png', text='', size_hint_y = None, height = '48dp')
         self.btn_sim_start.bind(on_release=self.sim_start)
         
-        image_dm = Image(source='./icons/dm.png')
+        self.image_dm = Image(source='./icons/dm.png')
         self.value_dm = Label(text = '0.25')
-        image_de = Image(source='./icons/de.png')
+        self.image_de = Image(source='./icons/de.png')
         self.value_de = Label(text = '0.75')
         
         self.slider_dm = Slider(min= 0.0, max= 1.0, value = 0.25, step = 0.25, orientation='vertical', value_track=True, value_track_color=[1, 0, 0, 1], size_hint_y = None, height = '160dp')
@@ -346,10 +350,10 @@ class MyApp(App):
         self.slider_de = Slider(min= 0.0, max= 1.0, value = 0.75, step = 0.25, orientation='vertical', value_track=True, value_track_color=[1, 0, 0, 1], size_hint_y = None, height = '160dp')
         self.slider_de.bind(value=self.update_de)
         
-        label_dm = Label(text = text_dict['t24'])
-        label_de = Label(text = text_dict['t20'])
-        label_png = Label(text = text_dict['t27'])
-        label_gvr = Label(text = text_dict['t31'])
+        self.label_dm = Label(text = text_dict['t24'])
+        self.label_de = Label(text = text_dict['t20'])
+        self.label_png = Label(text = text_dict['t27'])
+        self.label_gvr = Label(text = text_dict['t31'])
         
         self.spinner_dm = Spinner(text=text_dict['t54'], values=(text_dict['t25'], text_dict['t26']))
         self.spinner_de = Spinner(text=text_dict['t54'], values=(text_dict['t21'], text_dict['t22'], text_dict['t23']))
@@ -359,25 +363,25 @@ class MyApp(App):
         Settings_content = BoxLayout(orientation='horizontal')
         
         slider_dm_content = GridLayout(cols=1)
-        slider_dm_content.add_widget(image_dm)
+        slider_dm_content.add_widget(self.image_dm)
         slider_dm_content.add_widget(self.value_dm)
         slider_dm_content.add_widget(self.slider_dm)
         
         
         slider_de_content = GridLayout(cols=1)
-        slider_de_content.add_widget(image_de)
+        slider_de_content.add_widget(self.image_de)
         slider_de_content.add_widget(self.value_de)
         slider_de_content.add_widget(self.slider_de)
         
         
         subSettings_content = GridLayout(cols=2, size_hint_x = None, width=350)
-        subSettings_content.add_widget(label_dm)
+        subSettings_content.add_widget(self.label_dm)
         subSettings_content.add_widget(self.spinner_dm)
-        subSettings_content.add_widget(label_de)
+        subSettings_content.add_widget(self.label_de)
         subSettings_content.add_widget(self.spinner_de)
-        subSettings_content.add_widget(label_png)
+        subSettings_content.add_widget(self.label_png)
         subSettings_content.add_widget(self.spinner_png)
-        subSettings_content.add_widget(label_gvr)
+        subSettings_content.add_widget(self.label_gvr)
         subSettings_content.add_widget(self.spinner_gvr)
         
         Settings_content.add_widget(subSettings_content)
