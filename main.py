@@ -1,6 +1,9 @@
 from __future__ import division
 import os, sys
 
+#import shutil
+from copy import copy
+
 from astropy.cosmology import wCDM
 from astropy.io import fits
 
@@ -26,6 +29,7 @@ from kivy.uix.spinner import Spinner
 from kivy.uix.videoplayer import VideoPlayer
 from kivy.uix.video import Video
 
+import PIL as pil
 
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.behaviors import ToggleButtonBehavior
@@ -46,7 +50,7 @@ from matplotlib.lines import Line2D
 import glob
 import subprocess, shlex
 
-from textdictENG import text_dict
+from textdictITA import text_dict
 from emailling import *
 
 
@@ -59,7 +63,7 @@ CWD = os.getcwd(); dpi = 100
 
 #-----------------------------
 def readimage(fileimage):
-    image = Image.open(fileimage)
+    image = pil.Image.open(fileimage)
     xsize, ysize = image.size
     return image, xsize, ysize
 
@@ -85,41 +89,40 @@ def deflect(image_arr,image_data1,image_data2,xsize,ysize, scalefac, cosmo, Lens
 
     lensed_data = copy(image_arr)
     # Matteo Loop version
-    IJ = [tuple(x) for x in product(arange(xsize), arange(ysize))]
+#    IJ = [tuple(x) for x in np.product(np.arange(xsize), np.arange(ysize))]
+#
+#    IJ_new = array(IJ) - f * array([ [ image_data2[ij], image_data1[ij] ] for ij in IJ ])
+#
+#    IJ_new += 0.5
+#
+#    IJ_new[:,0] = IJ_new[:,0] % xsize
+#    IJ_new[:,1] = IJ_new[:,1] % ysize
+#
+#    IJ_new = IJ_new.astype(int)
+#    IJ_new = [ tuple(ij_new) for ij_new in IJ_new ]
+#
+#    for (ij,ij_new) in zip(IJ,IJ_new):
+#        lensed_data[ij] = image_arr[ij_new]
 
-    IJ_new = array(IJ) - f * array([ [ image_data2[ij], image_data1[ij] ] for ij in IJ ])
-
-    IJ_new += 0.5
-    
-    IJ_new[:,0] = IJ_new[:,0] % xsize
-    IJ_new[:,1] = IJ_new[:,1] % ysize
-    
-    IJ_new = IJ_new.astype(int)
-    IJ_new = [ tuple(ij_new) for ij_new in IJ_new ]
-    
-    for (ij,ij_new) in zip(IJ,IJ_new):
-        lensed_data[ij] = image_arr[ij_new]
-    
     # Carlo Loop version
-    '''
-        for i in range(0,xsize):
+    for i in range(0,xsize):
         for j in range(0,ysize):
-        ii = i - image_data2[i][j]*f + 0.5
-        if int(ii) >= xsize:
-        aa = int(ii/xsize)
-        ii = int(ii - xsize * aa)
-        if int(ii) < -0.5:
-        naa = -int(ii/xsize)
-        ii = int(ii + xsize * naa)
-        jj = j - image_data1[i][j]*f + 0.5
-        if int(jj) >= ysize:
-        bb = int(jj/ysize)
-        jj = int(jj - ysize * bb)
-        if int(jj) < -0.5:
-        nbb = -int(jj/ysize)
-        jj = int(jj + ysize * nbb)
-        lensed_data[i][j] = image_arr[int(ii),int(jj)]
-        '''
+            ii = i - image_data2[i][j]*f + 0.5
+            if int(ii) >= xsize:
+                aa = int(ii/xsize)
+                ii = int(ii - xsize * aa)
+            if int(ii) < -0.5:
+                naa = -int(ii/xsize)
+                ii = int(ii + xsize * naa)
+            jj = j - image_data1[i][j]*f + 0.5
+            if int(jj) >= ysize:
+                bb = int(jj/ysize)
+                jj = int(jj - ysize * bb)
+            if int(jj) < -0.5:
+                nbb = -int(jj/ysize)
+                jj = int(jj + ysize * nbb)
+            lensed_data[i][j] = image_arr[int(ii),int(jj)]
+        
     return lensed_data
 
 
@@ -155,6 +158,7 @@ class MyApp(App):
         #--: Home Page
         self.img=mpimg.imread('BBF_frontpage.png')
         self.ax.imshow(self.img); self.anim_running = True; self.anim_compare = True; self.settings_running = True
+        self.lensing_running = True
         
         #--: Widgets
         btn_user = IconButton(source='./icons/user.png', text='', size_hint_x=None, width=50)
@@ -164,6 +168,7 @@ class MyApp(App):
         btn_sim.bind(on_release=self.show_popup_sim)
         
         btn_lens = IconButton(source='./icons/lens.png', size_hint_x = None, width = 50)
+        btn_lens.bind(on_release=self.lensing_icons)
         
         btn_settings = IconButton(source='./icons/settings.png', size_hint_x = None, width = 50)
         btn_settings.bind(on_release = self.settings_icons)
@@ -188,6 +193,14 @@ class MyApp(App):
         
         self.btn_savedir = IconButton(source = './icons/savedir.png', size_hint_x = None, width = 50)
         self.btn_savedir.bind(on_release = self.show_popup_dirselect)
+        
+        self.btn_halo = IconButton(source = './icons/halo.png', size_hint_x = None, width = 50)
+        self.btn_halo.bind(on_release = self.HaloLensedImage)
+        
+        self.btn_cluster = IconButton(source = './icons/cluster.jpg', size_hint_x = None, width = 50)
+        self.btn_cluster.bind(on_release = self.MapLensedImage)
+        
+        self.slider_comdist = Slider(min= 0.0, max= 100.0, value = 10.0, step = 10.0, orientation='vertical', value_track=True, value_track_color=[1, 0, 0, 1], size_hint_x = None, width = 50, size_hint_y = None, hight='48dp')
 
         #--:Page Layout
         #--- Page 1
@@ -197,7 +210,7 @@ class MyApp(App):
         Pages.add_widget(self.Box_sim)
         #--- Page 2
         self.Settings_Page = GridLayout(cols=1, row_force_default=True, row_default_height=40)
-        self.subSettings_Page = GridLayout(cols=1, row_force_default=True, row_default_height=40)
+        self.subSettings_Page = GridLayout(cols=1, row_force_default=True, row_default_height=70)
         
         self.Settings_Page.add_widget(btn_user)
         self.Settings_Page.add_widget(btn_sim)
@@ -253,7 +266,17 @@ class MyApp(App):
         self.popup = Popup(title='', size_hint=(.640, .480), content=Settings_content, auto_dismiss=True, separator_height=0)
         self.popup.open()
     
-    #def show_popup_lensing(self, *args):
+    def lensing_icons(self, *args):
+        if self.lensing_running:
+            self.subSettings_Page.add_widget(self.btn_halo)
+            self.subSettings_Page.add_widget(self.btn_cluster)
+            self.subSettings_Page.add_widget(self.slider_comdist)
+            self.lensing_running = False
+        else:
+            self.subSettings_Page.remove_widget(self.btn_halo)
+            self.subSettings_Page.remove_widget(self.btn_cluster)
+            self.subSettings_Page.remove_widget(self.slider_comdist)
+            self.lensing_running = True
     
     def settings_icons(self, *args):
         if self.settings_running:
@@ -293,11 +316,12 @@ class MyApp(App):
     
     def selectdir(self, *args):
         self.savedir = self.dirselect.selection[0]
+        print self.savedir
         self.popup_dirselect.dismiss()
 
     def simselectdir(self, *args):
         self.simdir = self.simselect.selection[0]
-        print self.sim_dir
+        print self.simdir
         self.popup_dirselect.dismiss()
     
     def show_popup_preview(self, *args):
@@ -312,21 +336,21 @@ class MyApp(App):
         self.btn_sim_start = IconButton(source='./icons/play.png', text='', size_hint_y = None, height = '48dp')
         self.btn_sim_start.bind(on_release=self.sim_start)
         
-        image_dm = Image(source='./icons/dm.gif')
-        image_de = Image(source='./icons/de.gif')
+        image_dm = Image(source='./icons/dm.png')
+        image_de = Image(source='./icons/de.png')
         
         self.slider_dm = Slider(min= 0.0, max= 1.0, value = 0.25, step = 0.25, orientation='vertical', value_track=True, value_track_color=[1, 0, 0, 1], size_hint_y = None, height = '160dp')
         self.slider_de = Slider(min= 0.0, max= 1.0, value = 0.75, step = 0.25, orientation='vertical', value_track=True, value_track_color=[1, 0, 0, 1], size_hint_y = None, height = '160dp')
         
-        label_dm = Label(text = 'Dark Matter')
-        label_de = Label(text = 'Dark Energy')
-        label_png = Label(text = 'Early Universe')
-        label_gvr = Label(text = 'Gravity Type')
+        label_dm = Label(text = text_dict['t24'])
+        label_de = Label(text = text_dict['t20'])
+        label_png = Label(text = text_dict['t27'])
+        label_gvr = Label(text = text_dict['t31'])
         
-        self.spinner_dm = Spinner(text='Select', values=('Cold', 'Warm'))
-        self.spinner_de = Spinner(text='Select', values=('Constant', 'Quintessence', 'Phantom'))
-        self.spinner_png = Spinner(text='Select', values=('Gaussian', 'Negative Non-Gaussain', 'Positive Non-Gaussian'))
-        self.spinner_gvr = Spinner(text='Select', values=('Enistein', 'Modified Gravity'))
+        self.spinner_dm = Spinner(text='Select', values=(text_dict['t25'], text_dict['t26']))
+        self.spinner_de = Spinner(text='Select', values=(text_dict['t21'], text_dict['t22'], text_dict['t23']))
+        self.spinner_png = Spinner(text='Select', values=(text_dict['t28'], text_dict['t29'], text_dict['t30']))
+        self.spinner_gvr = Spinner(text='Select', values=(text_dict['t32'], text_dict['t33']))
         
         Settings_content = BoxLayout(orientation='horizontal')
         
@@ -374,25 +398,30 @@ class MyApp(App):
     
     def clean(self, *args):
         self.ax.clear(); self.ax.axis('off'); self.ax.imshow(self.img); self.canvas.draw();
-        self.Settings_Page.remove_widget(self.btn_pause); self.Settings_Page.remove_widget(self.btn_compare)
-        self.Settings_Page.remove_widget(self.btn_sim_save)
+        self.subSettings_Page.remove_widget(self.btn_pause); self.subSettings_Page.remove_widget(self.btn_compare)
+        self.subSettings_Page.remove_widget(self.btn_sim_save)
     
     def camera(self, *args):
         self.cam.play = not self.cam.play
         self.img_filename = self.input_name.text; self.img_filenamedir = ''.join(e for e in self.img_filename if e.isalnum())
+
+        try:
+            os.stat(CWD + "/tmp")
+        except:
+            os.mkdir(CWD + "/tmp")
+        try:
+            os.stat(self.savedir + "/" + self.img_filenamedir)
+        except:
+            os.mkdir(self.savedir + "/" + self.img_filenamedir)
         
         self.cam.export_to_png(CWD + "/tmp/" + self.img_filenamedir + "_image.png")
         self.btn_cam.source = CWD + "/tmp/" + self.img_filenamedir + "_image.png"
     
     def sim_start(self, *args):
-        #self.progress_var.set(0); self.frames = 0; self.maxframes = 0
-        
-        Simu_Dir = self.simdir + '/' #"./../Dens-Maps/"
+        Simu_Dir = self.model_select() + "/Dens-Maps/"
         
         cosmo = wCDM(70.3, self.slider_dm.value, self.slider_de.value, w0 = -1.0)
-        #filenames=sorted(glob.glob(self.simdir + "/" + Simu_Dir +'*.npy')); lga = linspace(log(0.05), log(1.0), 300); a = exp(lga); z = 1./a - 1.0;
-        #lktime = z #cosmo.lookback_time(z).value
-        filenames=sorted(glob.glob(Simu_Dir + '*.npy')); lga = np.linspace(np.log(0.05), np.log(1.0), 300); a = np.exp(lga); z = 1./a - 1.0; lktime = cosmo.lookback_time(z).value
+        filenames=sorted(glob.glob(self.simdir + "/" + Simu_Dir +'*.npy')); lga = np.linspace(np.log(0.05), np.log(1.0), 300); a = np.exp(lga); z = 1./a - 1.0; lktime = cosmo.lookback_time(z).value
         def animate(filename):
             image = np.load(filename); indx = filenames.index(filename)#; image=ndimage.gaussian_filter(image, sigma= sigmaval, truncate=truncateval, mode='wrap')
             im.set_data(image + 1)#; im.set_clim(image.min()+1.,image.max()+1.)
@@ -406,7 +435,7 @@ class MyApp(App):
         self.time = self.ax.text(0.1, 0.05 , text_dict['t43'] + ' %s Gyr' %round(lktime[0], 4), horizontalalignment='left', verticalalignment='top',color='white', transform = self.ax.transAxes, fontsize=10)
 
 
-        arr_hand = mpimg.imread(CWD + "/tmp/" + self.input_name.text +  "_image.png")
+        arr_hand = mpimg.imread(CWD + "/tmp/" + self.img_filenamedir +  "_image.png")
         imagebox = OffsetImage(arr_hand, zoom=.1); xy = (0.1, 0.15) # coordinates to position this image
 
         ab = AnnotationBbox(imagebox, xy, xybox=(0.1, 0.15), xycoords='axes fraction', boxcoords='axes fraction', pad=0.1)
@@ -422,21 +451,16 @@ class MyApp(App):
         ob = AnchoredHScaleBar(size=0.1, label="10Mpc", loc=4, frameon=False, pad=0.6, sep=2, color="white", linewidth=0.8)
         self.ax.add_artist(ob)
 
-#        sim_details_text = '%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s' %(text_dict['t42'], self.Name_Var.get(), text_dict['t53'], self.SC_Type, text_dict['t20'], self.DE_type, text_dict['t24'], self.DM_type, text_dict['t27'],  self.EU_Type, text_dict['t31'] , self.MG_Type)
-
-        sim_details_text = '%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s' %(text_dict['t42'], self.input_name.text, text_dict['t53'], self.spinner_de.text, text_dict['t24'], self.spinner_dm.text, text_dict['t27'],  self.spinner_png.text, text_dict['t31'] , self.spinner_gvr.text) #, self.SC_Type, text_dict['t20']
+        sim_details_text = '%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s' %(text_dict['t42'], self.input_name.text, text_dict['t53'], self.SC_Type, text_dict['t20'], self.spinner_de.text, text_dict['t24'], self.spinner_dm.text, text_dict['t27'],  self.spinner_png.text, text_dict['t31'] , self.spinner_gvr.text)
         print sim_details_text
         self.ax.text(0.1, 0.83, sim_details_text, color='white', bbox=dict(facecolor='none', edgecolor='white', boxstyle='round,pad=1', alpha=0.5), transform = self.ax.transAxes, alpha = 0.5)
 
         self.ani = animation.FuncAnimation(self.fig, animate, filenames, repeat=False, interval=25, blit=False)
         self.ax.axis('off'); self.ax.get_xaxis().set_visible(False); self.ax.get_yaxis().set_visible(False); self.canvas.draw()
         
-#        self.progress["value"] = 0; self.maxframes = 300; self.progress["maximum"] = 300
-#        self.read_frames()
-        self.Settings_Page.add_widget(self.btn_pause)
-        self.Settings_Page.add_widget(self.btn_compare)
-        self.Settings_Page.add_widget(self.btn_sim_save)
-        #self.Settings_Page.add_widget(self.btn_preview)
+        self.subSettings_Page.add_widget(self.btn_pause)
+        self.subSettings_Page.add_widget(self.btn_compare)
+        self.subSettings_Page.add_widget(self.btn_sim_save)
         self.popup_sim.dismiss()
         
     def pause(self, *args):
@@ -452,17 +476,17 @@ class MyApp(App):
     def save_movie(self, *args):
         writer = animation.writers['ffmpeg'](fps=15)#, bitrate=16000, codec='libx264')
         
-        self.ani.save(self.savedir + "/" + self.img_filenamedir + "_movie.mp4", writer=writer, dpi=dpi) #, savefig_kwargs={'dpi' : 200}
-        video_file = self.savedir + "/" + self.img_filenamedir + "_movie.mp4"
-        muxvideo_file = self.savedir + "/" + self.img_filenamedir + "_mux_movie.mp4"
+        self.ani.save(self.savedir + "/" + self.img_filenamedir + "/" + self.img_filenamedir  + "_movie.mp4", writer=writer, dpi=dpi) #, savefig_kwargs={'dpi' : 200}
+        video_file = self.savedir + "/" + self.img_filenamedir + "/" + self.img_filenamedir  + "_movie.mp4"
+        muxvideo_file = self.savedir + "/" + self.img_filenamedir + "/" + self.img_filenamedir  + "_mux_movie.mp4"
         
         audio_file = "ChillingMusic.wav"
         cmd = 'ffmpeg -i '+ video_file + ' -i ' + audio_file + ' -shortest ' + muxvideo_file
         subprocess.call(cmd, shell=True); print('Saving and Muxing Done')
-        self.muxvideo = self.savedir + "/" + self.img_filenamedir + "_mux_movie.mp4"
+        self.muxvideo = self.savedir + "/" + self.img_filenamedir + "/" + self.img_filenamedir + "_mux_movie.mp4"
 
 
-    def MapLensedImage(self):
+    def MapLensedImage(self, *args):
         self.ax.clear(); self.ax.axis('off')
         fileimage = CWD + "/tmp/" + self.img_filenamedir + "_image.png"
         
@@ -472,103 +496,114 @@ class MyApp(App):
         image, xsize, ysize = readimage(fileimage); image_arr = np.array(image)
         
         alpha1, alpha2 = buildlens(filelens)
-        cosmo = wCDM(70.3, self.Omega_m_Var.get(), self.Omega_l_Var.get(), w0=self.wx)
-        self.maplensedimage = deflect(image_arr, alpha1, alpha2, xsize, ysize, self.ComvDist_Var.get(), cosmo, "LSS"); self.ax.imshow(self.maplensedimage)
+        cosmo = wCDM(70.3, self.slider_dm.value, self.slider_de.value, w0=-1.0)
+        self.maplensedimage = deflect(image_arr, alpha1, alpha2, xsize, ysize, self.slider_comdist.value, cosmo, "LSS"); self.ax.imshow(self.maplensedimage)
         
         arr_hand1 = mpimg.imread("SIMCODE.png"); imagebox1 = OffsetImage(arr_hand1, zoom=.1); xy = [950.0, 85.0]
         ab1 = AnnotationBbox(imagebox1, xy, xybox=(0., 0.), xycoords='data', boxcoords="offset points", pad=0.1); self.ax.add_artist(ab1)
-        sim_details_text = '%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s' %(text_dict['t42'], self.Name_Var.get(), text_dict['t53'], self.SC_Type, text_dict['t20'], self.DE_type, text_dict['t24'], self.DM_type, text_dict['t27'],  self.EU_Type, text_dict['t31'] , self.MG_Type)
-        self.ax.text(0.05, 0.85, sim_details_text, color='black', bbox=dict(facecolor='none', edgecolor='black', boxstyle='round,pad=1', alpha=0.5), transform = self.ax.transAxes, alpha = 0.5)
         
+        sim_details_text = '%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s' %(text_dict['t42'], self.input_name.text, text_dict['t53'], self.SC_Type, text_dict['t20'], self.spinner_de.text, text_dict['t24'], self.spinner_dm.text, text_dict['t27'],  self.spinner_png.text, text_dict['t31'] , self.spinner_gvr.text)
+        print sim_details_text
+        self.ax.text(0.1, 0.83, sim_details_text, color='white', bbox=dict(facecolor='none', edgecolor='white', boxstyle='round,pad=1', alpha=0.5), transform = self.ax.transAxes, alpha = 0.5)
+
         self.ax.axis('off'); self.ax.get_xaxis().set_visible(False); self.ax.get_yaxis().set_visible(False); self.canvas.show()
         #imsave(self.savedir + "/" + self.img_filename + "_LensedMap_Photo.jpg", self.maplensedimage)
         self.fig.savefig(self.savedir + "/" + self.img_filename + "_LensedMap_Photo.png")
         self.LensedMap_Photo = self.img_filename + "_LensedMap_Photo.png"
+        self.showlensMap()
     
-    def HaloLensedImage(self):
+    def HaloLensedImage(self, *args):
         self.ax.clear(); self.ax.axis('off')
         fileimage = CWD + "/tmp/" + self.img_filenamedir + "_image.png"
         
-        Simu_Dir = self.model_select()+"/Lens-Maps/"
+        Simu_Dir = self.model_select() + "/Lens-Maps/"
         filelens = self.simdir + "/" + Simu_Dir + self.model_name +'_Halo.fits'
         
         image, xsize, ysize = readimage(fileimage); image_arr = np.array(image)
         
         alpha1, alpha2 = buildlens(filelens)
-        cosmo = wCDM(70.3, self.Omega_m_Var.get(), self.Omega_l_Var.get(), w0=self.wx)
-        self.halolensedimage = deflect(image_arr, alpha1, alpha2, xsize, ysize, self.ComvDist_Var.get(), cosmo, "HALO"); self.ax.imshow(self.halolensedimage)
+        cosmo = wCDM(70.3, self.slider_dm.value, self.slider_de.value, w0=-1.0)
+        self.halolensedimage = deflect(image_arr, alpha1, alpha2, xsize, ysize, self.slider_comdist.value, cosmo, "HALO"); self.ax.imshow(self.halolensedimage)
         
         arr_hand1 = mpimg.imread("SIMCODE.png"); imagebox1 = OffsetImage(arr_hand1, zoom=.1); xy = [950.0, 85.0]
         ab1 = AnnotationBbox(imagebox1, xy, xybox=(0., 0.), xycoords='data', boxcoords="offset points", pad=0.1); self.ax.add_artist(ab1)
-        sim_details_text = '%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s' %(text_dict['t42'], self.Name_Var.get(), text_dict['t53'], self.SC_Type, text_dict['t20'], self.DE_type, text_dict['t24'], self.DM_type, text_dict['t27'],  self.EU_Type, text_dict['t31'] , self.MG_Type)
-        self.ax.text(0.05, 0.85, sim_details_text, color='black', bbox=dict(facecolor='none', edgecolor='black', boxstyle='round,pad=1', alpha=0.5), transform = self.ax.transAxes, alpha = 0.5)
         
+        sim_details_text = '%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s' %(text_dict['t42'], self.input_name.text, text_dict['t53'], self.SC_Type, text_dict['t20'], self.spinner_de.text, text_dict['t24'], self.spinner_dm.text, text_dict['t27'],  self.spinner_png.text, text_dict['t31'] , self.spinner_gvr.text)
+        print sim_details_text
+        self.ax.text(0.1, 0.83, sim_details_text, color='white', bbox=dict(facecolor='none', edgecolor='white', boxstyle='round,pad=1', alpha=0.5), transform = self.ax.transAxes, alpha = 0.5)
+
         self.ax.axis('off'); self.ax.get_xaxis().set_visible(False); self.ax.get_yaxis().set_visible(False); self.canvas.show()
         #imsave(self.savedir + "/" + self.img_filename + "_LensedHalo_Photo.jpg", self.halolensedimage)
         self.fig.savefig(self.savedir + "/" + self.img_filename + "_LensedHalo_Photo.png")
         self.LensedHalo_Photo = self.img_filename + "_LensedHalo_Photo.png"
+        self.showlenscluster()
 
 
     def showlensMap(self):
-        self.ax.clear(); self.ax.axis('off')
-        Simu_Dir = self.model_select()+"/Lens-Maps/"
+        self.ax0.clear(); self.ax0.axis('off')
+        Simu_Dir = self.model_select() + "/Lens-Maps/"
         filename = self.simdir + "/" + Simu_Dir + self.model_name +'kappaBApp_2.fits'; self.Lens_map = fits.getdata(filename, ext=0)
         LenImg = self.ax.imshow(self.Lens_map + 1, cmap=matplotlib.cm.magma, norm=matplotlib.colors.LogNorm(), interpolation="bicubic") #vmin=1., vmax=1800., clip = True
         
         arr_hand1 = mpimg.imread("SIMCODE.png"); imagebox1 = OffsetImage(arr_hand1, zoom=.1); xy = [950.0, 85.0]
         ab1 = AnnotationBbox(imagebox1, xy, xybox=(0., 0.), xycoords='data', boxcoords="offset points", pad=0.1); self.ax.add_artist(ab1)
-        sim_details_text = '%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s' %(text_dict['t42'], self.Name_Var.get(), text_dict['t53'], self.SC_Type, text_dict['t20'], self.DE_type, text_dict['t24'], self.DM_type, text_dict['t27'],  self.EU_Type, text_dict['t31'] , self.MG_Type)
-        self.ax.text(0.05, 0.85, sim_details_text, color='white', bbox=dict(facecolor='none', edgecolor='white', boxstyle='round,pad=1', alpha=0.5), transform = self.ax.transAxes, alpha = 0.5)
         
-        self.ax.axis('off'); self.ax.get_xaxis().set_visible(False); self.ax.get_yaxis().set_visible(False); self.canvas.show()
+        sim_details_text = '%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s' %(text_dict['t42'], self.input_name.text, text_dict['t53'], self.SC_Type, text_dict['t20'], self.spinner_de.text, text_dict['t24'], self.spinner_dm.text, text_dict['t27'],  self.spinner_png.text, text_dict['t31'] , self.spinner_gvr.text)
+        print sim_details_text
+        self.ax.text(0.1, 0.83, sim_details_text, color='white', bbox=dict(facecolor='none', edgecolor='white', boxstyle='round,pad=1', alpha=0.5), transform = self.ax.transAxes, alpha = 0.5)
+
+        self.ax0.axis('off'); self.ax0.get_xaxis().set_visible(False); self.ax0.get_yaxis().set_visible(False); self.canvas0.draw()
         #imsave(self.savedir + "/" + self.img_filename + "_LensedMap.jpg", log(self.Lens_map + 1), cmap=matplotlib.cm.magma)
-        self.fig.savefig(self.savedir + "/" + self.img_filename + "_LensedMap.png")
+        self.fig0.savefig(self.savedir + "/" + self.img_filename + "_LensedMap.png")
         self.LensedMap = self.img_filename + "_LensedMap.png"
     
     def showlenscluster(self):
-        self.ax.clear(); self.ax.axis('off')
+        self.ax0.clear(); self.ax0.axis('off')
         Simu_Dir = self.model_select()+"/Lens-Maps/"
         filename = self.simdir + "/" + Simu_Dir + self.model_name +'_Halo.fits'; self.Halo_map = fits.getdata(filename, ext=0)
-        HaloImg = self.ax.imshow(self.Halo_map + 1, cmap=matplotlib.cm.magma, norm=matplotlib.colors.LogNorm(), interpolation="bicubic") #vmin=1., vmax=1800., clip = True
+        HaloImg = self.ax0.imshow(self.Halo_map + 1, cmap=matplotlib.cm.magma, norm=matplotlib.colors.LogNorm(), interpolation="bicubic") #vmin=1., vmax=1800., clip = True
         
         arr_hand1 = mpimg.imread("SIMCODE.png"); imagebox1 = OffsetImage(arr_hand1, zoom=.1); xy = [950.0, 85.0]
-        ab1 = AnnotationBbox(imagebox1, xy, xybox=(0., 0.), xycoords='data', boxcoords="offset points", pad=0.1); self.ax.add_artist(ab1)
-        sim_details_text = '%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s' %(text_dict['t42'], self.Name_Var.get(), text_dict['t53'], self.SC_Type, text_dict['t20'], self.DE_type, text_dict['t24'], self.DM_type, text_dict['t27'],  self.EU_Type, text_dict['t31'] , self.MG_Type)
-        self.ax.text(0.05, 0.85, sim_details_text, color='white', bbox=dict(facecolor='none', edgecolor='white', boxstyle='round,pad=1', alpha=0.5), transform = self.ax.transAxes, alpha = 0.5)
+        ab1 = AnnotationBbox(imagebox1, xy, xybox=(0., 0.), xycoords='data', boxcoords="offset points", pad=0.1); self.ax0.add_artist(ab1)
         
-        self.ax.axis('off'); self.ax.get_xaxis().set_visible(False); self.ax.get_yaxis().set_visible(False); self.canvas.show()
+        sim_details_text = '%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s' %(text_dict['t42'], self.input_name.text, text_dict['t53'], self.SC_Type, text_dict['t20'], self.spinner_de.text, text_dict['t24'], self.spinner_dm.text, text_dict['t27'],  self.spinner_png.text, text_dict['t31'] , self.spinner_gvr.text)
+        print sim_details_text
+        self.ax.text(0.1, 0.83, sim_details_text, color='white', bbox=dict(facecolor='none', edgecolor='white', boxstyle='round,pad=1', alpha=0.5), transform = self.ax.transAxes, alpha = 0.5)
+
+        self.ax0.axis('off'); self.ax0.get_xaxis().set_visible(False); self.ax0.get_yaxis().set_visible(False); self.canvas0.draw()
         #imsave(self.savedir + "/" + self.img_filename + "_LensedHalo.jpg", log(self.Halo_map + 1), cmap=matplotlib.cm.magma)
-        self.fig.savefig(self.savedir + "/" + self.img_filename + "_LensedHalo.png")
+        self.fig0.savefig(self.savedir + "/" + self.img_filename + "_LensedHalo.png")
         self.LensedHalo = self.img_filename + "_LensedHalo.png"
 
     def model_select(self):
-        if self.Lambda_Var.get() != 'Lambda_':
-            run_type = self.Lambda_Var.get()
-            if run_type == "Quint_":
-                self.wx = -0.9; self.DE_type = text_dict['t22']; self.DM_type = text_dict['t25']; self.EU_Type = text_dict['t28']; self.MG_Type = text_dict['t32']
-            else:
-                self.wx = -1.1; self.DE_type = text_dict['t23']; self.DM_type = text_dict['t25']; self.EU_Type = text_dict['t28']; self.MG_Type = text_dict['t32']
-        elif self.CDM_Var.get()  != 'Lambda_':
-            run_type = self.CDM_Var.get(); self.wx = -1.0; self.DM_type = text_dict['t26']; self.DE_type = text_dict['t21']; self.EU_Type = text_dict['t28']; self.MG_Type = text_dict['t32']
-            self.Omega_l_Var.set(0.75); self.Omega_m_Var.set(0.25)
-        elif self.IniM_Var.get() != 'Lambda_':
-            run_type = self.IniM_Var.get(); self.wx = -1.0
-            if run_type == "LocalPNG_1000-":
-                self.EU_Type = 'Positive'; self.DE_type = text_dict['t21']; self.DM_type = text_dict['t25']; self.MG_Type = text_dict['t32']
-            else:
-                self.EU_Type = 'Negative'; self.DE_type = text_dict['t21']; self.DM_type = text_dict['t25']; self.MG_Type = text_dict['t32']
-        elif self.MG_Var.get() != 'Lambda_':
-            run_type = self.MG_Var.get(); self.wx = -1.0; self.MG_Type = text_dict['t33']; self.DE_type = text_dict['t21']; self.DM_type = text_dict['t25']; self.EU_Type = text_dict['t28']
-            self.Omega_l_Var.set(0.75); self.Omega_m_Var.set(0.25)
-        else:
-            run_type = 'Lambda_'; self.wx = -1.0; self.DE_type = text_dict['t21']; self.DM_type = text_dict['t25']; self.EU_Type = text_dict['t28']; self.MG_Type = text_dict['t32']
-        
-        if self.Omega_m_Var.get() == 0.0:
-            Omega_m = 0.1; Omega_m = str(Omega_m)
-        else:
-            Omega_m = str(self.Omega_m_Var.get())
+        SimDict = { 'Constant':'Lambda_',
+                    'Quintessence':'Qunit_',
+                    'Phantom':'Phantom_',
+                    'Cold':'Lambda_',
+                    'Warm':'wDM_0.1-',
+                    'Gaussian':'Lambda_',
+                    'Positive non-Gaussian':'LocalPNG_1000-',
+                    'Negative non-Gaussian':'LocalPNG_-1000-',
+                    'Einstein': 'Lambda_',
+                    'Modified Garvity':'MGfR_1.2-'}
 
-        Omega_k = 1. - (self.Omega_m_Var.get() + self.Omega_l_Var.get())
+        if self.spinner_de.text != 'Constant':
+            run_type = SimDict[self.spinner_de.text]
+        elif self.spinner_dm.text != 'Cold':
+            run_type = SimDict[self.spinner_dm.text]
+        elif self.spinner_png.text != 'Gaussian':
+            run_type = SimDict[self.spinner_png.text]
+        elif self.spinner_gvr.text != 'Einstein':
+            run_type = SimDict[self.spinner_gvr.text]
+        else:
+            run_type = SimDict[self.spinner_de.text]
+
+        if self.slider_dm.value == 0.0:
+            Omega_m = 0.1
+        else:
+            Omega_m = self.slider_dm.value
+
+        Omega_k = 1. - (Omega_m + self.slider_de.value)
         
         if Omega_k == 0:
             self.SC_Type = text_dict['t50']
@@ -577,8 +612,8 @@ class MyApp(App):
         else:
             self.SC_Type = text_dict['t52']
 
-        model  = "BBF_" + run_type + Omega_m + "-" + str(self.Omega_l_Var.get())
-        self.model_name = run_type + Omega_m + "-" + str(self.Omega_l_Var.get())
+        model  = "BBF_" + run_type + str(Omega_m) + "-" + str(self.slider_de.value)
+        self.model_name = run_type + str(Omega_m) + "-" + str(self.slider_de.value)
         print model
         
         return model
