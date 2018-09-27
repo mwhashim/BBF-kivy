@@ -441,6 +441,9 @@ class MyApp(App):
         self.btn_cam.source = CWD + "/tmp/" + self.img_filenamedir + "_image.png"
     
     def sim_start(self, *args):
+        self.ax.clear(); self.ax.axis('off'); self.ax.imshow(self.img); self.canvas.draw();
+        self.ax0.clear(); self.ax0.axis('off'); self.ax0.imshow(self.img); self.canvas0.draw();
+        
         self.sim_nonStand(); self.sim_stand()
         self.subSettings_Page.add_widget(self.btn_pause)
         self.subSettings_Page.add_widget(self.btn_compare)
@@ -552,7 +555,7 @@ class MyApp(App):
         cmd = 'ffmpeg -i '+ video_file + ' -i ' + audio_file + ' -shortest ' + muxvideo_file
         subprocess.call(cmd, shell=True); print('Saving and Muxing Done')
         self.muxvideo = self.savedir + "/" + self.img_filenamedir + "/" + self.img_filenamedir + "_mux_movie.mp4"
-
+    
 
     def MapLensedImage(self, *args):
         self.ax.clear(); self.ax.axis('off')
@@ -676,9 +679,9 @@ class MyApp(App):
         if Omega_k == 0:
             self.SC_Type = text_dict['t50']
         elif Omega_k > 0:
-            self.SC_Type = text_dict['t51']
-        else:
             self.SC_Type = text_dict['t52']
+        else:
+            self.SC_Type = text_dict['t51']
 
         model  = "BBF_" + run_type + str(Omega_m) + "-" + str(self.slider_de.value)
         self.model_name = run_type + str(Omega_m) + "-" + str(self.slider_de.value)
