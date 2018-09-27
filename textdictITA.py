@@ -52,5 +52,6 @@ text_dict = { 't1': 'Big Bang Factory',
               't50': 'Euclidea',
               't51': 'Sferica',
               't52': 'Iperbolica',
-              't53': 'Geometria dello spazio'
+              't53': 'Geometria dello spazio',
+              't54': 'Selezionare'
               }

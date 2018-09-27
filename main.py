@@ -50,7 +50,7 @@ from matplotlib.lines import Line2D
 import glob
 import subprocess, shlex
 
-from textdictENG import text_dict
+from textdictITA import text_dict
 from emailling import *
 
 
@@ -347,10 +347,10 @@ class MyApp(App):
         label_png = Label(text = text_dict['t27'])
         label_gvr = Label(text = text_dict['t31'])
         
-        self.spinner_dm = Spinner(text='Select', values=(text_dict['t25'], text_dict['t26']))
-        self.spinner_de = Spinner(text='Select', values=(text_dict['t21'], text_dict['t22'], text_dict['t23']))
-        self.spinner_png = Spinner(text='Select', values=(text_dict['t28'], text_dict['t29'], text_dict['t30']))
-        self.spinner_gvr = Spinner(text='Select', values=(text_dict['t32'], text_dict['t33']))
+        self.spinner_dm = Spinner(text=text_dict['t54'], values=(text_dict['t25'], text_dict['t26']))
+        self.spinner_de = Spinner(text=text_dict['t54'], values=(text_dict['t21'], text_dict['t22'], text_dict['t23']))
+        self.spinner_png = Spinner(text=text_dict['t54'], values=(text_dict['t28'], text_dict['t29'], text_dict['t30']))
+        self.spinner_gvr = Spinner(text=text_dict['t54'], values=(text_dict['t32'], text_dict['t33']))
         
         Settings_content = BoxLayout(orientation='horizontal')
         
@@ -576,24 +576,24 @@ class MyApp(App):
         self.LensedHalo = self.img_filename + "_LensedHalo.png"
 
     def model_select(self):
-        SimDict = { 'Constant':'Lambda_',
-                    'Quintessence':'Qunit_',
-                    'Phantom':'Phantom_',
-                    'Cold':'Lambda_',
-                    'Warm':'wDM_0.1-',
-                    'Gaussian':'Lambda_',
-                    'Positive non-Gaussian':'LocalPNG_1000-',
-                    'Negative non-Gaussian':'LocalPNG_-1000-',
-                    'Einstein': 'Lambda_',
-                    'Modified Garvity':'MGfR_1.2-'}
+        SimDict = { text_dict['t21']:'Lambda_',
+                    text_dict['t22']:'Qunit_',
+                    text_dict['t23']:'Phantom_',
+                    text_dict['t25']:'Lambda_',
+                    text_dict['t26']:'wDM_0.1-',
+                    text_dict['t28']:'Lambda_',
+                    text_dict['t29']:'LocalPNG_1000-',
+                    text_dict['t30']:'LocalPNG_-1000-',
+                    text_dict['t32']: 'Lambda_',
+                    text_dict['t33']:'MGfR_1.2-'}
 
-        if self.spinner_de.text != 'Constant':
+        if self.spinner_de.text != text_dict['t21']:
             run_type = SimDict[self.spinner_de.text]
-        elif self.spinner_dm.text != 'Cold':
+        elif self.spinner_dm.text != text_dict['t25']:
             run_type = SimDict[self.spinner_dm.text]
-        elif self.spinner_png.text != 'Gaussian':
+        elif self.spinner_png.text != text_dict['t28']:
             run_type = SimDict[self.spinner_png.text]
-        elif self.spinner_gvr.text != 'Einstein':
+        elif self.spinner_gvr.text != text_dict['t32']:
             run_type = SimDict[self.spinner_gvr.text]
         else:
             run_type = SimDict[self.spinner_de.text]
