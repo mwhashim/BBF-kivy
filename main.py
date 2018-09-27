@@ -255,16 +255,23 @@ class MyApp(App):
         self.btn_cam.bind(on_release=self.show_popup_cam)
         
         Settings_content = BoxLayout(orientation='horizontal')
+        
+        subSettings_content = BoxLayout(orientation='vertical')
+
         user_content = GridLayout(cols = 2, size_hint_y = None, height = '58dp')
         
         user_content.add_widget(self.label_name)
         user_content.add_widget(self.input_name)
         user_content.add_widget(self.label_email)
         user_content.add_widget(self.input_email)
-        Settings_content.add_widget(user_content)
+        
+        subSettings_content.add_widget(Image(source = './icons/sir.png'))
+        subSettings_content.add_widget(user_content)
+        
+        Settings_content.add_widget(subSettings_content)
         Settings_content.add_widget(self.btn_cam)
 
-        self.popup = Popup(title='', size_hint=(None, None) , size=(500, 250), content=Settings_content, auto_dismiss=True, separator_height=0)
+        self.popup = Popup(title='', size_hint=(None, None) , size=(500, 200), content=Settings_content, auto_dismiss=True, separator_height=0)
         self.popup.open()
     
     def lensing_icons(self, *args):
@@ -409,7 +416,7 @@ class MyApp(App):
         content.add_widget(self.cam)
         content.add_widget(btn_capture)
         
-        self.popup = Popup(title='', size_hint=(None, None) , size=(600, 480), content=content, auto_dismiss=True, separator_height=0)
+        self.popup = Popup(title='', size_hint=(None, None) , size=('540dp', '480dp'), content=content, auto_dismiss=True, separator_height=0)
         self.popup.open()
     
     def clean(self, *args):
