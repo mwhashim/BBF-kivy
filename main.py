@@ -196,7 +196,7 @@ class MyApp(App):
         self.btn_stop = IconButton(source='./icons/stop.png', size_hint_x = None, width = 50)
         self.btn_stop.bind(on_press=self.sim_stop)
 
-        self.btn_sim_save = IconButton(source='./icons/save.png', size_hint_x = None, width = 50, background_color=( 1, 0, 0))
+        self.btn_sim_save = IconButton(source='./icons/save.png', size_hint_x = None, width = 50)
         self.btn_sim_save.bind(on_release=self.save_movie)
         
         self.btn_send = IconButton(source='./icons/send.ico', size_hint_x = None, width = 50)
