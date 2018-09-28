@@ -9,6 +9,7 @@ from astropy.io import fits
 
 from itertools import cycle
 from itertools import product
+from operator import sub
 
 from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
 from kivy.app import App
@@ -71,6 +72,7 @@ CWD = os.getcwd(); dpi = 100
 #-----------------------------
 def readimage(fileimage):
     image = imgg.open(fileimage)
+    image = image.resize((1024,1024), imgg.ANTIALIAS)
     xsize, ysize = image.size
     return image, xsize, ysize
 
@@ -83,7 +85,7 @@ def buildlens(filelens):
     return image_data1, image_data2
 
 
-def deflect(image_arr, image_data1,image_data2,xsize,ysize, scalefac, cosmo, LensType):
+def deflect(image_arr, image_data1, image_data2, xsize, ysize, scalefac, cosmo, LensType):
     
     if LensType == "LSS":
         ds = cosmo.angular_diameter_distance(1.0).value*cosmo.H(0.).value/100.; dl = 1.; dls = 1.
@@ -108,7 +110,7 @@ def deflect(image_arr, image_data1,image_data2,xsize,ysize, scalefac, cosmo, Len
     IJ_new = IJ_new.astype(int)
     IJ_new = [ tuple(ij_new) for ij_new in IJ_new ]
 
-    for (ij,ij_new) in zip(IJ,IJ_new):
+    for (ij, ij_new) in zip(IJ, IJ_new):
         lensed_data[ij] = image_arr[ij_new]
 
     # Carlo Loop version
@@ -216,11 +218,13 @@ class MyApp(App):
         #--:Page Layout
         #--- Page 1
         Pages = PageLayout(orientation= "vertical")
-        self.Box_sim = BoxLayout(orientation= "vertical")
+        self.Box_sim = BoxLayout(orientation= "horizontal")
         self.Box_sim.add_widget(self.canvas)
         self.label_status = Label(text = 'Welcome to BBF', size_hint_y = None, height = '28dp')
-        self.Box_sim.add_widget(self.label_status)
-        Pages.add_widget(self.Box_sim)
+        self.BigBox_sim = BoxLayout(orientation= "vertical")
+        self.BigBox_sim.add_widget(self.Box_sim)
+        self.BigBox_sim.add_widget(self.label_status)
+        Pages.add_widget(self.BigBox_sim)
         #--- Page 2
         self.Settings_Page = GridLayout(cols=1, row_force_default=True, row_default_height=40)
         self.subSettings_Page = GridLayout(cols=1, row_force_default=True, row_default_height=40)
@@ -288,6 +292,7 @@ class MyApp(App):
         self.popup.open()
     
     def lensing_icons(self, *args):
+        self.Box_sim.add_widget(self.canvas0)
         self.subSettings_Page.remove_widget(self.btn_pause)
         self.subSettings_Page.remove_widget(self.btn_compare)
         #self.subSettings_Page.remove_widget(self.btn_preview)
@@ -440,6 +445,7 @@ class MyApp(App):
         self.ax.clear(); self.ax.axis('off'); self.ax.imshow(self.img); self.canvas.draw();
         self.subSettings_Page.remove_widget(self.btn_pause); self.subSettings_Page.remove_widget(self.btn_compare)
         self.subSettings_Page.remove_widget(self.btn_sim_save); self.subSettings_Page.remove_widget(self.btn_stop)
+        self.Box_sim.remove_widget(self.canvas0)
     
     def camera(self, *args):
         self.cam.play = not self.cam.play
@@ -606,16 +612,16 @@ class MyApp(App):
         cosmo = wCDM(70.3, self.slider_dm.value, self.slider_de.value, w0=-1.0)
         self.maplensedimage = deflect(image_arr, alpha1, alpha2, xsize, ysize, self.slider_comdist.value, cosmo, "LSS"); self.ax.imshow(self.maplensedimage)
         
-        arr_hand1 = mpimg.imread("SIMCODE.png"); imagebox1 = OffsetImage(arr_hand1, zoom=.1); xy = [950.0, 85.0]
+        arr_hand1 = mpimg.imread("./icons/simcode.png"); imagebox1 = OffsetImage(arr_hand1, zoom=.1); xy = [950.0, 85.0]
         ab1 = AnnotationBbox(imagebox1, xy, xybox=(0., 0.), xycoords='data', boxcoords="offset points", pad=0.1); self.ax.add_artist(ab1)
         
         sim_details_text = '%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s' %(text_dict['t42'], self.input_name.text, text_dict['t53'], self.SC_Type, text_dict['t20'], self.spinner_de.text, text_dict['t24'], self.spinner_dm.text, text_dict['t27'],  self.spinner_png.text, text_dict['t31'] , self.spinner_gvr.text)
         print sim_details_text
         self.ax.text(0.1, 0.83, sim_details_text, color='white', bbox=dict(facecolor='none', edgecolor='white', boxstyle='round,pad=1', alpha=0.5), transform = self.ax.transAxes, alpha = 0.5)
 
-        self.ax.axis('off'); self.ax.get_xaxis().set_visible(False); self.ax.get_yaxis().set_visible(False); self.canvas.show()
+        self.ax.axis('off'); self.ax.get_xaxis().set_visible(False); self.ax.get_yaxis().set_visible(False); self.canvas.draw()
         #imsave(self.savedir + "/" + self.img_filename + "_LensedMap_Photo.jpg", self.maplensedimage)
-        self.fig.savefig(self.savedir + "/" + self.img_filename + "_LensedMap_Photo.png")
+        self.fig.savefig(self.savedir + "/" + self.img_filename + "/" + self.img_filenamedir + "_LensedMap_Photo.png")
         self.LensedMap_Photo = self.img_filename + "_LensedMap_Photo.png"
         self.showlensMap()
     
@@ -632,16 +638,16 @@ class MyApp(App):
         cosmo = wCDM(70.3, self.slider_dm.value, self.slider_de.value, w0=-1.0)
         self.halolensedimage = deflect(image_arr, alpha1, alpha2, xsize, ysize, self.slider_comdist.value, cosmo, "HALO"); self.ax.imshow(self.halolensedimage)
         
-        arr_hand1 = mpimg.imread("SIMCODE.png"); imagebox1 = OffsetImage(arr_hand1, zoom=.1); xy = [950.0, 85.0]
+        arr_hand1 = mpimg.imread("./icons/simcode.png"); imagebox1 = OffsetImage(arr_hand1, zoom=.1); xy = [950.0, 85.0]
         ab1 = AnnotationBbox(imagebox1, xy, xybox=(0., 0.), xycoords='data', boxcoords="offset points", pad=0.1); self.ax.add_artist(ab1)
         
         sim_details_text = '%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s' %(text_dict['t42'], self.input_name.text, text_dict['t53'], self.SC_Type, text_dict['t20'], self.spinner_de.text, text_dict['t24'], self.spinner_dm.text, text_dict['t27'],  self.spinner_png.text, text_dict['t31'] , self.spinner_gvr.text)
         print sim_details_text
         self.ax.text(0.1, 0.83, sim_details_text, color='white', bbox=dict(facecolor='none', edgecolor='white', boxstyle='round,pad=1', alpha=0.5), transform = self.ax.transAxes, alpha = 0.5)
 
-        self.ax.axis('off'); self.ax.get_xaxis().set_visible(False); self.ax.get_yaxis().set_visible(False); self.canvas.show()
+        self.ax.axis('off'); self.ax.get_xaxis().set_visible(False); self.ax.get_yaxis().set_visible(False); self.canvas.draw()
         #imsave(self.savedir + "/" + self.img_filename + "_LensedHalo_Photo.jpg", self.halolensedimage)
-        self.fig.savefig(self.savedir + "/" + self.img_filename + "_LensedHalo_Photo.png")
+        self.fig.savefig(self.savedir + "/" + self.img_filename + "/" + self.img_filenamedir + "_LensedHalo_Photo.png")
         self.LensedHalo_Photo = self.img_filename + "_LensedHalo_Photo.png"
         self.showlenscluster()
 
@@ -652,7 +658,7 @@ class MyApp(App):
         filename = self.simdir + "/" + Simu_Dir + self.model_name +'kappaBApp_2.fits'; self.Lens_map = fits.getdata(filename, ext=0)
         LenImg = self.ax.imshow(self.Lens_map + 1, cmap=matplotlib.cm.magma, norm=matplotlib.colors.LogNorm(), interpolation="bicubic") #vmin=1., vmax=1800., clip = True
         
-        arr_hand1 = mpimg.imread("SIMCODE.png"); imagebox1 = OffsetImage(arr_hand1, zoom=.1); xy = [950.0, 85.0]
+        arr_hand1 = mpimg.imread("./icons/simcode.png"); imagebox1 = OffsetImage(arr_hand1, zoom=.1); xy = [950.0, 85.0]
         ab1 = AnnotationBbox(imagebox1, xy, xybox=(0., 0.), xycoords='data', boxcoords="offset points", pad=0.1); self.ax.add_artist(ab1)
         
         sim_details_text = '%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s' %(text_dict['t42'], self.input_name.text, text_dict['t53'], self.SC_Type, text_dict['t20'], self.spinner_de.text, text_dict['t24'], self.spinner_dm.text, text_dict['t27'],  self.spinner_png.text, text_dict['t31'] , self.spinner_gvr.text)
@@ -661,7 +667,7 @@ class MyApp(App):
 
         self.ax0.axis('off'); self.ax0.get_xaxis().set_visible(False); self.ax0.get_yaxis().set_visible(False); self.canvas0.draw()
         #imsave(self.savedir + "/" + self.img_filename + "_LensedMap.jpg", log(self.Lens_map + 1), cmap=matplotlib.cm.magma)
-        self.fig0.savefig(self.savedir + "/" + self.img_filename + "_LensedMap.png")
+        self.fig0.savefig(self.savedir + "/" + self.img_filename + "/" + self.img_filenamedir + "_LensedMap.png")
         self.LensedMap = self.img_filename + "_LensedMap.png"
     
     def showlenscluster(self):
@@ -670,7 +676,7 @@ class MyApp(App):
         filename = self.simdir + "/" + Simu_Dir + self.model_name +'_Halo.fits'; self.Halo_map = fits.getdata(filename, ext=0)
         HaloImg = self.ax0.imshow(self.Halo_map + 1, cmap=matplotlib.cm.magma, norm=matplotlib.colors.LogNorm(), interpolation="bicubic") #vmin=1., vmax=1800., clip = True
         
-        arr_hand1 = mpimg.imread("SIMCODE.png"); imagebox1 = OffsetImage(arr_hand1, zoom=.1); xy = [950.0, 85.0]
+        arr_hand1 = mpimg.imread("./icons/simcode.png"); imagebox1 = OffsetImage(arr_hand1, zoom=.1); xy = [950.0, 85.0]
         ab1 = AnnotationBbox(imagebox1, xy, xybox=(0., 0.), xycoords='data', boxcoords="offset points", pad=0.1); self.ax0.add_artist(ab1)
         
         sim_details_text = '%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s' %(text_dict['t42'], self.input_name.text, text_dict['t53'], self.SC_Type, text_dict['t20'], self.spinner_de.text, text_dict['t24'], self.spinner_dm.text, text_dict['t27'],  self.spinner_png.text, text_dict['t31'] , self.spinner_gvr.text)
@@ -679,7 +685,7 @@ class MyApp(App):
 
         self.ax0.axis('off'); self.ax0.get_xaxis().set_visible(False); self.ax0.get_yaxis().set_visible(False); self.canvas0.draw()
         #imsave(self.savedir + "/" + self.img_filename + "_LensedHalo.jpg", log(self.Halo_map + 1), cmap=matplotlib.cm.magma)
-        self.fig0.savefig(self.savedir + "/" + self.img_filename + "_LensedHalo.png")
+        self.fig0.savefig(self.savedir + "/" + self.img_filename + "/" + self.img_filenamedir + "_LensedHalo.png")
         self.LensedHalo = self.img_filename + "_LensedHalo.png"
 
     def model_select(self):
