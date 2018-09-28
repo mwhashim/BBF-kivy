@@ -621,7 +621,7 @@ class MyApp(App):
 
         self.ax.axis('off'); self.ax.get_xaxis().set_visible(False); self.ax.get_yaxis().set_visible(False); self.canvas.draw()
         #imsave(self.savedir + "/" + self.img_filename + "_LensedMap_Photo.jpg", self.maplensedimage)
-        self.fig.savefig(self.savedir + "/" + self.img_filename + "/" + self.img_filenamedir + "_LensedMap_Photo.png")
+        self.fig.savefig(self.savedir + "/" + self.img_filenamedir + "/" + self.img_filenamedir + "_LensedMap_Photo.png")
         self.LensedMap_Photo = self.img_filename + "_LensedMap_Photo.png"
         self.showlensMap()
     
@@ -647,7 +647,7 @@ class MyApp(App):
 
         self.ax.axis('off'); self.ax.get_xaxis().set_visible(False); self.ax.get_yaxis().set_visible(False); self.canvas.draw()
         #imsave(self.savedir + "/" + self.img_filename + "_LensedHalo_Photo.jpg", self.halolensedimage)
-        self.fig.savefig(self.savedir + "/" + self.img_filename + "/" + self.img_filenamedir + "_LensedHalo_Photo.png")
+        self.fig.savefig(self.savedir + "/" + self.img_filenamedir + "/" + self.img_filenamedir + "_LensedHalo_Photo.png")
         self.LensedHalo_Photo = self.img_filename + "_LensedHalo_Photo.png"
         self.showlenscluster()
 
@@ -667,7 +667,7 @@ class MyApp(App):
 
         self.ax0.axis('off'); self.ax0.get_xaxis().set_visible(False); self.ax0.get_yaxis().set_visible(False); self.canvas0.draw()
         #imsave(self.savedir + "/" + self.img_filename + "_LensedMap.jpg", log(self.Lens_map + 1), cmap=matplotlib.cm.magma)
-        self.fig0.savefig(self.savedir + "/" + self.img_filename + "/" + self.img_filenamedir + "_LensedMap.png")
+        self.fig0.savefig(self.savedir + "/" + self.img_filenamedir + "/" + self.img_filenamedir + "_LensedMap.png")
         self.LensedMap = self.img_filename + "_LensedMap.png"
     
     def showlenscluster(self):
@@ -685,7 +685,7 @@ class MyApp(App):
 
         self.ax0.axis('off'); self.ax0.get_xaxis().set_visible(False); self.ax0.get_yaxis().set_visible(False); self.canvas0.draw()
         #imsave(self.savedir + "/" + self.img_filename + "_LensedHalo.jpg", log(self.Halo_map + 1), cmap=matplotlib.cm.magma)
-        self.fig0.savefig(self.savedir + "/" + self.img_filename + "/" + self.img_filenamedir + "_LensedHalo.png")
+        self.fig0.savefig(self.savedir + "/" + self.img_filenamedir + "/" + self.img_filenamedir + "_LensedHalo.png")
         self.LensedHalo = self.img_filename + "_LensedHalo.png"
 
     def model_select(self):
