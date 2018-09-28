@@ -152,16 +152,10 @@ class IconButton(ButtonBehavior, Image):
     pass
 
 class MyApp(App):
-#    stop = threading.Event()
-#
-#    def on_stop(self):
-#        # The Kivy event loop is about to stop, set a stop signal;
-#        # otherwise the app window will close, but the Python process will
-#        # keep running until all secondary threads exit.
-#        self.stop.set()
+
 
     def build(self):
-        
+        self.title = 'Big Bang Factory'
         #--:Initiating plot pan
         self.fig, self.ax, self.canvas = self.PlotPan()
         self.fig0, self.ax0, self.canvas0 = self.PlotPan()
@@ -211,10 +205,10 @@ class MyApp(App):
         self.btn_halo = IconButton(source = './icons/halo.png', size_hint_x = None, width = 50)
         self.btn_halo.bind(on_release = self.HaloLensedImage)
         
-        self.btn_cluster = IconButton(source = './icons/cluster.jpg', size_hint_x = None, width = 50)
+        self.btn_cluster = IconButton(source = './icons/cluster.gif', size_hint_x = None, width = 50)
         self.btn_cluster.bind(on_release = self.MapLensedImage)
         
-        self.slider_comdist = Slider(min= 0.0, max= 100.0, value = 10.0, step = 10.0, orientation='vertical', value_track=True, value_track_color=[1, 0, 0, 1], size_hint_x = None, width = 50, size_hint_y = None, hight='48dp')
+        self.slider_comdist = Slider(min= 0.0, max= 100.0, value = 10.0, step = 10.0, orientation = 'horizontal', value_track=True, value_track_color=[1, 0, 0, 1], size_hint_x = None, width = 150)
 
         #--:Page Layout
         #--- Page 1
@@ -224,7 +218,7 @@ class MyApp(App):
         Pages.add_widget(self.Box_sim)
         #--- Page 2
         self.Settings_Page = GridLayout(cols=1, row_force_default=True, row_default_height=40)
-        self.subSettings_Page = GridLayout(cols=1, row_force_default=True, row_default_height=70)
+        self.subSettings_Page = GridLayout(cols=1, row_force_default=True, row_default_height=40)
         
         self.Settings_Page.add_widget(btn_user)
         self.Settings_Page.add_widget(btn_sim)
