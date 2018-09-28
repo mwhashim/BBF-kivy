@@ -182,8 +182,8 @@ class MyApp(App):
         self.btn_compare = IconButton(source='./icons/compare.ico', size_hint_x = None, width = 50)
         self.btn_compare.bind(on_press=self.compare)
         
-#        self.btn_preview = IconButton(source='./icons/video.png', size_hint_x = None, width = 50)
-#        self.btn_preview.bind(on_press=self.show_popup_preview)
+        self.btn_stop = IconButton(source='./icons/stop.png', size_hint_x = None, width = 50)
+        self.btn_stop.bind(on_press=self.sim_stop)
 
         self.btn_sim_save = IconButton(source='./icons/save.png', size_hint_x = None, width = 50)
         self.btn_sim_save.bind(on_release=self.save_movie)
@@ -446,16 +446,25 @@ class MyApp(App):
         self.popup.dismiss()
     
     def sim_start(self, *args):
-        self.ax.clear(); self.ax.axis('off'); self.ax.imshow(self.img); self.canvas.draw();
-        self.ax0.clear(); self.ax0.axis('off'); self.ax0.imshow(self.img); self.canvas0.draw();
+        self.ax.clear(); self.ax.axis('off'); self.canvas.draw();
+        self.ax0.clear(); self.ax0.axis('off'); self.canvas0.draw();
         
         self.sim_nonStand(); self.sim_stand()
         self.subSettings_Page.add_widget(self.btn_pause)
         self.subSettings_Page.add_widget(self.btn_compare)
-        #self.subSettings_Page.add_widget(self.btn_preview)
+        self.subSettings_Page.add_widget(self.btn_stop)
         self.subSettings_Page.add_widget(self.btn_sim_save)
         self.popup_sim.dismiss()
     
+    def sim_stop(self, *args):
+        self.subSettings_Page.remove_widget(self.btn_pause)
+        self.subSettings_Page.remove_widget(self.btn_compare)
+        self.subSettings_Page.remove_widget(self.btn_stop)
+        self.subSettings_Page.remove_widget(self.btn_sim_save)
+        
+        self.ax.clear(); self.ax.axis('off'); self.canvas.draw()
+        self.ax0.clear(); self.ax0.axis('off'); self.canvas0.draw()
+
     def sim_stand(self):
         Simu_Dir = "BBF_Lambda_0.25-0.75" + "/Dens-Maps/"
     
@@ -655,7 +664,7 @@ class MyApp(App):
 
     def model_select(self):
         SimDict = { text_dict['t21']:'Lambda_',
-                    text_dict['t22']:'Qunit_',
+                    text_dict['t22']:'Quint_',
                     text_dict['t23']:'Phantom_',
                     text_dict['t25']:'Lambda_',
                     text_dict['t26']:'wDM_0.1-',
