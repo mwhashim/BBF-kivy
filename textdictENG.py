@@ -53,5 +53,5 @@ text_dict = { 't1': 'Big Bang Factory',
               't51': 'Closed',
               't52': 'Open',
               't53': 'Space Curvature',
-              't54': 'Select'
+              't54': '<Select>'
               }

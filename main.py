@@ -411,7 +411,10 @@ class MyApp(App):
         self.popup_sim.open()
     
     def update_dm(self, instance,value):
-        self.value_dm.text = str(value)
+        if value == 0.0:
+            self.value_dm.text = str(0.1)
+        else:
+            self.value_dm.text = str(value)
     
     def update_de(self, instance,value):
         self.value_de.text = str(value)
