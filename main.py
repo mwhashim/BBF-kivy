@@ -445,6 +445,8 @@ class MyApp(App):
         self.ax.clear(); self.ax.axis('off'); self.ax.imshow(self.img); self.canvas.draw();
         self.subSettings_Page.remove_widget(self.btn_pause); self.subSettings_Page.remove_widget(self.btn_compare)
         self.subSettings_Page.remove_widget(self.btn_sim_save); self.subSettings_Page.remove_widget(self.btn_stop)
+        self.subSettings_Page.remove_widget(self.btn_halo); self.subSettings_Page.remove_widget(self.btn_cluster)
+        self.subSettings_Page.remove_widget(self.slider_comdist)
         self.Box_sim.remove_widget(self.canvas0)
     
     def camera(self, *args):
