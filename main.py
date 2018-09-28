@@ -7,6 +7,9 @@ from copy import copy
 from astropy.cosmology import wCDM
 from astropy.io import fits
 
+from itertools import cycle
+from itertools import product
+
 from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
@@ -29,7 +32,7 @@ from kivy.uix.spinner import Spinner
 from kivy.uix.videoplayer import VideoPlayer
 from kivy.uix.video import Video
 
-import PIL as pil
+from PIL import Image as imgg
 
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.behaviors import ToggleButtonBehavior
@@ -67,7 +70,7 @@ CWD = os.getcwd(); dpi = 100
 
 #-----------------------------
 def readimage(fileimage):
-    image = pil.Image.open(fileimage)
+    image = imgg.open(fileimage)
     xsize, ysize = image.size
     return image, xsize, ysize
 
@@ -80,7 +83,7 @@ def buildlens(filelens):
     return image_data1, image_data2
 
 
-def deflect(image_arr,image_data1,image_data2,xsize,ysize, scalefac, cosmo, LensType):
+def deflect(image_arr, image_data1,image_data2,xsize,ysize, scalefac, cosmo, LensType):
     
     if LensType == "LSS":
         ds = cosmo.angular_diameter_distance(1.0).value*cosmo.H(0.).value/100.; dl = 1.; dls = 1.
@@ -93,40 +96,40 @@ def deflect(image_arr,image_data1,image_data2,xsize,ysize, scalefac, cosmo, Lens
 
     lensed_data = copy(image_arr)
     # Matteo Loop version
-#    IJ = [tuple(x) for x in np.product(np.arange(xsize), np.arange(ysize))]
-#
-#    IJ_new = array(IJ) - f * array([ [ image_data2[ij], image_data1[ij] ] for ij in IJ ])
-#
-#    IJ_new += 0.5
-#
-#    IJ_new[:,0] = IJ_new[:,0] % xsize
-#    IJ_new[:,1] = IJ_new[:,1] % ysize
-#
-#    IJ_new = IJ_new.astype(int)
-#    IJ_new = [ tuple(ij_new) for ij_new in IJ_new ]
-#
-#    for (ij,ij_new) in zip(IJ,IJ_new):
-#        lensed_data[ij] = image_arr[ij_new]
+    IJ = [tuple(x) for x in product(np.arange(xsize), np.arange(ysize))]
+
+    IJ_new = np.array(IJ) - f * np.array([ [ image_data2[ij], image_data1[ij] ] for ij in IJ ])
+
+    IJ_new += 0.5
+
+    IJ_new[:,0] = IJ_new[:,0] % xsize
+    IJ_new[:,1] = IJ_new[:,1] % ysize
+
+    IJ_new = IJ_new.astype(int)
+    IJ_new = [ tuple(ij_new) for ij_new in IJ_new ]
+
+    for (ij,ij_new) in zip(IJ,IJ_new):
+        lensed_data[ij] = image_arr[ij_new]
 
     # Carlo Loop version
-    for i in range(0,xsize):
-        for j in range(0,ysize):
-            ii = i - image_data2[i][j]*f + 0.5
-            if int(ii) >= xsize:
-                aa = int(ii/xsize)
-                ii = int(ii - xsize * aa)
-            if int(ii) < -0.5:
-                naa = -int(ii/xsize)
-                ii = int(ii + xsize * naa)
-            jj = j - image_data1[i][j]*f + 0.5
-            if int(jj) >= ysize:
-                bb = int(jj/ysize)
-                jj = int(jj - ysize * bb)
-            if int(jj) < -0.5:
-                nbb = -int(jj/ysize)
-                jj = int(jj + ysize * nbb)
-            lensed_data[i][j] = image_arr[int(ii),int(jj)]
-        
+#    for i in range(0,xsize):
+#        for j in range(0,ysize):
+#            ii = i - image_data2[i][j]*f + 0.5
+#            if int(ii) >= xsize:
+#                aa = int(ii/xsize)
+#                ii = int(ii - xsize * aa)
+#            if int(ii) < -0.5:
+#                naa = -int(ii/xsize)
+#                ii = int(ii + xsize * naa)
+#            jj = j - image_data1[i][j]*f + 0.5
+#            if int(jj) >= ysize:
+#                bb = int(jj/ysize)
+#                jj = int(jj - ysize * bb)
+#            if int(jj) < -0.5:
+#                nbb = -int(jj/ysize)
+#                jj = int(jj + ysize * nbb)
+#            lensed_data[i][j] = image_arr[int(ii),int(jj)]
+
     return lensed_data
 
 
@@ -213,8 +216,10 @@ class MyApp(App):
         #--:Page Layout
         #--- Page 1
         Pages = PageLayout(orientation= "vertical")
-        self.Box_sim = BoxLayout(orientation= "horizontal")
+        self.Box_sim = BoxLayout(orientation= "vertical")
         self.Box_sim.add_widget(self.canvas)
+        self.label_status = Label(text = 'Welcome to BBF', size_hint_y = None, height = '28dp')
+        self.Box_sim.add_widget(self.label_status)
         Pages.add_widget(self.Box_sim)
         #--- Page 2
         self.Settings_Page = GridLayout(cols=1, row_force_default=True, row_default_height=40)
@@ -449,8 +454,8 @@ class MyApp(App):
         except:
             os.mkdir(self.savedir + "/" + self.img_filenamedir)
         
-        self.cam.export_to_png(CWD + "/tmp/" + self.img_filenamedir + "_image.png")
-        self.btn_cam.source = CWD + "/tmp/" + self.img_filenamedir + "_image.png"
+        self.cam.export_to_png(CWD + "/tmp/" + self.img_filenamedir + "_image.jpg")
+        self.btn_cam.source = CWD + "/tmp/" + self.img_filenamedir + "_image.jpg"
         self.popup.dismiss()
     
     def sim_start(self, *args):
@@ -491,7 +496,7 @@ class MyApp(App):
         self.time0 = self.ax0.text(0.1, 0.05 , text_dict['t43'] + ' %s Gyr' %round(lktime[0], 4), horizontalalignment='left', verticalalignment='top',color='white', transform = self.ax0.transAxes, fontsize=10)
         
         
-        arr_hand = mpimg.imread(CWD + "/tmp/" + self.img_filenamedir +  "_image.png")
+        arr_hand = mpimg.imread(CWD + "/tmp/" + self.img_filenamedir +  "_image.jpg")
         imagebox = OffsetImage(arr_hand, zoom=.1); xy = (0.1, 0.15) # coordinates to position this image
         
         ab = AnnotationBbox(imagebox, xy, xybox=(0.1, 0.15), xycoords='axes fraction', boxcoords='axes fraction', pad=0.1)
@@ -532,7 +537,7 @@ class MyApp(App):
         self.time = self.ax.text(0.1, 0.05 , text_dict['t43'] + ' %s Gyr' %round(lktime[0], 4), horizontalalignment='left', verticalalignment='top',color='white', transform = self.ax.transAxes, fontsize=10)
 
 
-        arr_hand = mpimg.imread(CWD + "/tmp/" + self.img_filenamedir +  "_image.png")
+        arr_hand = mpimg.imread(CWD + "/tmp/" + self.img_filenamedir +  "_image.jpg")
         imagebox = OffsetImage(arr_hand, zoom=.1); xy = (0.1, 0.15) # coordinates to position this image
 
         ab = AnnotationBbox(imagebox, xy, xybox=(0.1, 0.15), xycoords='axes fraction', boxcoords='axes fraction', pad=0.1)
@@ -570,10 +575,9 @@ class MyApp(App):
 
     def save_movie(self, *args):
         print 'Saving movie ....'
+        self.label_status.text = 'Saving movie ....'
         simulate=multiprocessing.Process(None, self.moviesave)
         simulate.start()
-    
-        #Thread(target=self.moviesave).start()
     
     def moviesave(self):
         writer = animation.writers['ffmpeg'](fps=15)#, bitrate=16000, codec='libx264')
@@ -584,14 +588,14 @@ class MyApp(App):
         
         audio_file = "ChillingMusic.wav"
         cmd = 'ffmpeg -i '+ video_file + ' -i ' + audio_file + ' -shortest ' + muxvideo_file
-        subprocess.call(cmd, shell=True); print('Saving and Muxing Done')
+        subprocess.call(cmd, shell=True); print('Saving and Muxing Done'); self.label_status.text = 'Saving and Muxing Done!!'
         self.muxvideo = self.savedir + "/" + self.img_filenamedir + "/" + self.img_filenamedir + "_mux_movie.mp4"
         os.remove(video_file)
     
 
     def MapLensedImage(self, *args):
         self.ax.clear(); self.ax.axis('off')
-        fileimage = CWD + "/tmp/" + self.img_filenamedir + "_image.png"
+        fileimage = CWD + "/tmp/" + self.img_filenamedir + "_image.jpg"
         
         Simu_Dir = self.model_select()+"/Lens-Maps/"
         filelens = self.simdir + "/" + Simu_Dir + self.model_name +'kappaBApp_2.fits'
@@ -617,7 +621,7 @@ class MyApp(App):
     
     def HaloLensedImage(self, *args):
         self.ax.clear(); self.ax.axis('off')
-        fileimage = CWD + "/tmp/" + self.img_filenamedir + "_image.png"
+        fileimage = CWD + "/tmp/" + self.img_filenamedir + "_image.jpg"
         
         Simu_Dir = self.model_select() + "/Lens-Maps/"
         filelens = self.simdir + "/" + Simu_Dir + self.model_name +'_Halo.fits'
@@ -723,6 +727,7 @@ class MyApp(App):
 
     def send_movie(self, *args):
         print 'Sending ....'
+        self.label_status.text = 'Sending ....'
         Thread(target=self.moviesend).start()
     
     def moviesend(self):
@@ -730,6 +735,7 @@ class MyApp(App):
         files = os.listdir(self.savedir + "/" +  self.img_filenamedir)
         From = 'researchernight2018@gmail.com'; PWD = 'unibo2018'
         emailling(self.input_name.text, From, self.input_email.text, PWD, self.savedir + "/" +  self.img_filenamedir, files)
+        self.label_status.text = 'Mail Sent !!'
 
 
 #--------- RUN ----------------------------
