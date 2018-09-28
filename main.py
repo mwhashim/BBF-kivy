@@ -43,12 +43,16 @@ import matplotlib.image as mpimg
 from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 import matplotlib
 
+from threading import Thread
+import multiprocessing
+
 import numpy as np
 from matplotlib import cm, colors
 from matplotlib.lines import Line2D
 
 import glob
 import subprocess, shlex
+from time import sleep
 
 from textdictITA import text_dict
 from emailling import *
@@ -148,6 +152,13 @@ class IconButton(ButtonBehavior, Image):
     pass
 
 class MyApp(App):
+#    stop = threading.Event()
+#
+#    def on_stop(self):
+#        # The Kivy event loop is about to stop, set a stop signal;
+#        # otherwise the app window will close, but the Python process will
+#        # keep running until all secondary threads exit.
+#        self.stop.set()
 
     def build(self):
         
@@ -185,7 +196,7 @@ class MyApp(App):
         self.btn_stop = IconButton(source='./icons/stop.png', size_hint_x = None, width = 50)
         self.btn_stop.bind(on_press=self.sim_stop)
 
-        self.btn_sim_save = IconButton(source='./icons/save.png', size_hint_x = None, width = 50)
+        self.btn_sim_save = IconButton(source='./icons/save.png', size_hint_x = None, width = 50, background_color=( 1, 0, 0))
         self.btn_sim_save.bind(on_release=self.save_movie)
         
         self.btn_send = IconButton(source='./icons/send.ico', size_hint_x = None, width = 50)
@@ -426,7 +437,7 @@ class MyApp(App):
     def clean(self, *args):
         self.ax.clear(); self.ax.axis('off'); self.ax.imshow(self.img); self.canvas.draw();
         self.subSettings_Page.remove_widget(self.btn_pause); self.subSettings_Page.remove_widget(self.btn_compare)
-        self.subSettings_Page.remove_widget(self.btn_sim_save)#; self.subSettings_Page.remove_widget(self.btn_preview)
+        self.subSettings_Page.remove_widget(self.btn_sim_save); self.subSettings_Page.remove_widget(self.btn_stop)
     
     def camera(self, *args):
         self.cam.play = not self.cam.play
@@ -545,6 +556,7 @@ class MyApp(App):
         self.ax.text(0.1, 0.83, sim_details_text, color='white', bbox=dict(facecolor='none', edgecolor='white', boxstyle='round,pad=1', alpha=0.5), transform = self.ax.transAxes, alpha = 0.5)
 
         self.ani = animation.FuncAnimation(self.fig, animate, filenames, repeat=False, interval=25, blit=False)
+        
         self.ax.axis('off'); self.ax.get_xaxis().set_visible(False); self.ax.get_yaxis().set_visible(False); self.canvas.draw()
     
     def pause(self, *args):
@@ -560,9 +572,16 @@ class MyApp(App):
             self.anim_running = True
 
     def save_movie(self, *args):
+        print 'Saving movie ....'
+        simulate=multiprocessing.Process(None, self.moviesave)
+        simulate.start()
+    
+        #Thread(target=self.moviesave).start()
+    
+    def moviesave(self):
         writer = animation.writers['ffmpeg'](fps=15)#, bitrate=16000, codec='libx264')
-        
         self.ani.save(self.savedir + "/" + self.img_filenamedir + "/" + self.img_filenamedir  + "_movie.mp4", writer=writer, dpi=dpi) #, savefig_kwargs={'dpi' : 200}
+        
         video_file = self.savedir + "/" + self.img_filenamedir + "/" + self.img_filenamedir  + "_movie.mp4"
         muxvideo_file = self.savedir + "/" + self.img_filenamedir + "/" + self.img_filenamedir  + "_mux_movie.mp4"
         
@@ -706,6 +725,10 @@ class MyApp(App):
         return model
 
     def send_movie(self, *args):
+        print 'Sending ....'
+        Thread(target=self.moviesend).start()
+    
+    def moviesend(self):
         #files=sorted(glob.glob(self.img_filename + '/*'))
         files = os.listdir(self.savedir + "/" +  self.img_filenamedir)
         From = 'researchernight2018@gmail.com'; PWD = 'unibo2018'
